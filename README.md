@@ -3,6 +3,10 @@
 GPTWOL is a simple and lightweight Wake on Lan gui made with python to wake up your computers on your LAN.
 It was made mostly by chatGPT.
 
+## Screenshot 
+
+![gptwol-gui.png](/assets/gptwol-gui.png)
+
 ## Features 
 
 - Docker Image to deploy
