@@ -1,0 +1,2 @@
+COMPUTER-01,aa:aa:aa:aa:aa:aa,192.168.1.1
+COMPUTER-02,bb:bb:bb:bb:bb:bb,192.168.1.2

@@ -1,0 +1,171 @@
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+
+<style>
+  header {
+    position: sticky;
+    top: 0; /* stick to the top of the viewport */
+    z-index: 1;
+    display: block;
+    text-align: center;
+    background-color: #333;
+    color: #fff;
+  }
+  .container {
+    padding-top: 20px;
+    padding-right: 50px;
+    padding-left: 50px;
+  }
+  .card {
+    margin-bottom: 20px;
+  }
+  .card-footer {
+    text-align: right;
+  }
+  input[type=submit] {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  p.card-info-right {
+    text-align: right;
+  }
+  .status-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 2px solid #000;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  }
+  .status-indicator.awake {
+    background-color: #4CAF50;
+  }
+  .status-indicator.asleep {
+    background-color: #ff0000;
+  }
+</style>
+
+<script>
+
+function checkForm() {
+  // Get the values of the form fields
+  const name = document.getElementById('name').value;
+  const ipAddress = document.getElementById('ip_address').value;
+  const macAddress = document.getElementById('mac_address').value;
+
+  // Regular expressions to check the format of the IP and MAC address
+  const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+  const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+
+  // Check if the values are valid
+  if (!name || !ipRegex.test(ipAddress) || !macRegex.test(macAddress)) {
+    if (!name || !ipRegex.test(ipAddress) && !macRegex.test(macAddress)) {
+      alert('IP and MAC provided are invalid');
+    } else if (!name || !ipRegex.test(ipAddress)) {
+      alert('IP provided is invalid');
+    } else {
+      alert('MAC provided is invalid');
+    } 
+    return false;
+  }
+
+  // Check if the name already exists
+  fetch(`/check_name_exists?name=${name}`)
+    .then(response => response.json())
+    .then(exists => {
+      if (exists) {
+        alert('A computer with this name already exists');
+        return false;
+      }
+      return true;
+    });
+}
+
+
+function updateStatus(ip_address, element) {
+  // Make an HTTP GET request to the check_status endpoint
+  fetch(`/check_status?ip_address=${ip_address}`)
+    .then(response => response.text())
+    .then(status => {
+      // Update the class of the element based on the returned status
+      if (status === 'awake') {
+        element.classList.remove('asleep');
+        element.classList.add('awake');
+      } else {
+        element.classList.remove('awake');
+        element.classList.add('asleep');
+      }
+    });
+}
+
+{% if os.environ.get('DISABLE_REFRESH') != '1' %}
+  setInterval(() => {
+    // Update the status of all computers
+    for (let element of document.getElementsByClassName('status-indicator')) {
+      const ip_address = element.getAttribute('data-ip-address');
+      updateStatus(ip_address, element);
+    }
+  {% if os.environ.get('REFRESH_PING') == '60' %}
+    }, 60000);
+  {% elif os.environ.get('REFRESH_PING') == '15' %}
+    }, 15000);
+  {% else %}
+    }, 30000);
+  {% endif %}
+{% endif %}
+</script>
+
+<header>
+  <h1>GPT Wake On Lan</h1>
+</header>
+
+<div class="container">
+  {% for computer in computers %}
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">{{ computer.name }} <span class="status-indicator {% if is_computer_awake(computer.ip_address) %}awake{% else %}asleep{% endif %}" data-ip-address="{{ computer.ip_address }}"></span></h5>
+        <p class="card-info-right">IP: {{ computer.ip_address }}</p>
+        <p class="card-info-right">MAC: {{ computer.mac_address }}</p>
+      </div>
+      <div class="card-footer">
+        <form method="POST" action="/wakeup" style="display: inline-block;">
+          <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+          <input type="submit" value="Wake up">
+        </form>
+        {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
+          <form method="POST" action="/delete_computer" style="display: inline-block;">
+            <input type="hidden" name="name" value="{{ computer.name }}">
+            <input type="submit" value="Delete" style="background-color: #ff0000;" onclick="return confirm('Are you sure you want to delete this computer?');">
+          </form>
+        {% endif %}
+        </form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+{% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
+<div class="container" style="border: 1px solid #ccc;">
+  <form method="POST" action="/add_computer" onsubmit="return checkForm()">
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input type="text" class="form-control" name="name" id="name" required>
+    </div>
+    <div class="form-group">
+      <label for="mac_address">MAC address</label>
+      <input type="text" class="form-control" name="mac_address" id="mac_address" placeholder="00:11:22:33:44:55" required>
+    </div>
+    <div class="form-group">
+      <label for="ip_address">IP address</label>
+      <input type="text" class="form-control" name="ip_address" id="ip_address" placeholder="192.168.0.1" required>
+    </div>
+    <div class="text-center">
+        <button type="submit" class="btn btn-primary">Add computer</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
