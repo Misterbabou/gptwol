@@ -14,6 +14,7 @@ It was made mostly by chatGPT.
 - Add or Delete Computer
 - Computers status check with ping request
 - Very low power usage (20 mb RAM)
+- Check if IP and MAC provided are valid 
 
 ## Special configuration you can change
 
@@ -56,6 +57,6 @@ docker-compose up -d
 
 ## :warning: Notes
 
-* The app container needs to run in host network mode to send the wakeonlan command on your local network.
-* Make sure that the PORT you are using is free on your host computer
-* Make sure that BIOS settings and OS is configure to allow Wake On Lan
+- The app container needs to run in host network mode to send the wakeonlan command on your local network.
+- Make sure that the PORT you are using is free on your host computer
+- Make sure that BIOS settings and OS is configure to allow Wake On Lan
