@@ -60,3 +60,8 @@ docker-compose up -d
 - The app container needs to run in host network mode to send the wakeonlan command on your local network.
 - Make sure that the PORT you are using is free on your host computer
 - Make sure that BIOS settings and OS is configure to allow Wake On Lan
+
+## Roadmap 
+
+- Add ARM version 
+- Add feature to plan automatic Wake on Lan (Cron)
