@@ -63,5 +63,5 @@ docker-compose up -d
 
 ## Roadmap 
 
-- Add ARM version 
+:heavy_check_mark: Add ARM version (Added in 1.0.1)
 - Add feature to plan automatic Wake on Lan (Cron)
