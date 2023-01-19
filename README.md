@@ -14,7 +14,8 @@ It was made mostly by chatGPT.
 - Add or Delete Computer
 - Computers status check with ping request
 - Very low power usage (20 mb RAM)
-- Check if IP and MAC provided are valid 
+- Check if IP and MAC provided are valid
+- cron job to wake up device (BETA no GUI yet) 
 
 ## Special configuration you can change
 
@@ -43,6 +44,7 @@ services:
       #- REFRESH_PING=15 # Uncomment this line to change ping status check, can be 15 or 60 (seconds) default value is 30 seconds
     volumes:
       - ./computers.txt:/app/computers.txt
+      #- ./appdata/cron:/etc/cron.d #Uncomment this line for Beta cron wakeonlan
 ```
 
 Create the file for storing computers (the mounted file on docker-compose)
@@ -60,8 +62,25 @@ docker-compose up -d
 - The app container needs to run in host network mode to send the wakeonlan command on your local network.
 - Make sure that the PORT you are using is free on your host computer
 - Make sure that BIOS settings and OS is configure to allow Wake On Lan
+- Don't expose gptwol directly on internet without proper authentication
 
 ## Roadmap 
 
 :heavy_check_mark: Add ARM version (Added in 1.0.1)
 - Add feature to plan automatic Wake on Lan (Cron)
+
+## Beta Cron to wake up periodically your devices
+
+- Uncomment the volume line in docker-compose.yml
+```
+- ./appdata/cron:/etc/cron.d
+```
+
+- Run the Container 
+- Create following a file in you new volume (add a line for each computer) : 
+```
+* * * * * root /usr/local/bin/wakeonlan <mac-address>
+```
+
+help link for cron: https://crontab.cronhub.io/
+
