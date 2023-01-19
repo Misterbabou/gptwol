@@ -77,7 +77,7 @@ docker-compose up -d
 ```
 
 - Run the Container 
-- Create following a file in you new volume (add a line for each computer) : 
+- Create a file in your new volume (add a line for each computer) : 
 ```
 * * * * * root /usr/local/bin/wakeonlan <mac-address>
 ```
