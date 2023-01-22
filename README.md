@@ -39,6 +39,7 @@ services:
     restart: unless-stopped
     environment:
       - PORT=8080 #Free Port on Your host default is 5000
+      #- TZ=Europe/Paris #Uncomment and set your timezone for Cron default is UTC
       #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers default is to allow
       #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status default is to allow
       #- REFRESH_PING=15 # Uncomment this line to change ping status check, can be 15 or 60 (seconds) default value is 30 seconds
@@ -70,6 +71,11 @@ docker-compose up -d
 - Add feature to plan automatic Wake on Lan (Cron)
 
 ## Beta Cron to wake up periodically your devices
+
+- Uncomment the Timezone Environment Variable and set to your timezone
+```
+- TZ=Europe/Paris
+```
 
 - Uncomment the volume line in docker-compose.yml
 ```
