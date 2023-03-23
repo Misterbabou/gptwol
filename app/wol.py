@@ -15,6 +15,19 @@ with open('computers.txt') as f:
     name, mac_address, ip_address = line.strip().split(',')
     computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address})
 
+# Load the cron schedule information for each computer
+with open('/etc/cron.d/gptwol') as f:
+  for line in f:
+    if not line.startswith('#'):
+      fields = line.strip().split()
+      schedule = ' '.join(fields[:5])
+      user = fields[5]
+      command = ' '.join(fields[6:])
+      mac_address = command.split()[-1]
+      computer = next((c for c in computers if c['mac_address'] == mac_address), None)
+      if computer:
+        computer['cron_schedule'] = schedule
+
 def send_wol_packet(mac_address):
   # Convert the MAC address to a packed binary string
   packed_mac = struct.pack('!6B', *[int(x, 16) for x in mac_address.split(':')])
