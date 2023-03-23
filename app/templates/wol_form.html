@@ -129,6 +129,9 @@ function updateStatus(ip_address, element) {
         <h5 class="card-title">{{ computer.name }} <span class="status-indicator {% if is_computer_awake(computer.ip_address) %}awake{% else %}asleep{% endif %}" data-ip-address="{{ computer.ip_address }}"></span></h5>
         <p class="card-info-right">IP: {{ computer.ip_address }}</p>
         <p class="card-info-right">MAC: {{ computer.mac_address }}</p>
+        {% if computer.cron_schedule is defined %}
+          <p class="card-info-right">Cron: {{ computer.cron_schedule }}</p>
+        {% endif %}
       </div>
       <div class="card-footer">
         <form method="POST" action="/wakeup" style="display: inline-block;">
@@ -136,6 +139,17 @@ function updateStatus(ip_address, element) {
           <input type="submit" value="Wake up">
         </form>
         {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
+          {% if computer.cron_schedule is defined %}
+            <form method="POST" action="/delete_cron" style="display: inline-block;">
+              <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+              <input type="submit" value="Delete Cron" style="background-color: #e44444;">
+            </form>
+          {% else %}
+            <form method="POST" action="/add_cron" style="display: inline-block;">
+              <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+              <input type="submit" value="Add Cron" style="background-color: #6aa84f;">
+            </form>
+          {% endif %}
           <form method="POST" action="/delete_computer" style="display: inline-block;">
             <input type="hidden" name="name" value="{{ computer.name }}">
             <input type="submit" value="Delete" style="background-color: #ff0000;" onclick="return confirm('Are you sure you want to delete this computer?');">
