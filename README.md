@@ -77,6 +77,6 @@ docker-compose up -d
 
 :heavy_check_mark: Add ARM version (Added in 1.0.1)
 
-:heavy_check_mark: Add feature to plan automatic Wake on Lan (Cron)
+:heavy_check_mark: Add feature to plan automatic Wake on Lan (Cron) (Added in 1.0.3)
 - Add Search feature
-
+- Remove Cron on Computer deletion
