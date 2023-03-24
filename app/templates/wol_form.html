@@ -11,7 +11,7 @@
     color: #fff;
   }
   .container {
-    padding-top: 20px;
+    padding-top: 10px;
     padding-right: 50px;
     padding-left: 50px;
   }
@@ -45,6 +45,12 @@
   }
   .status-indicator.asleep {
     background-color: #ff0000;
+  }
+
+  #cron_request {
+    min-width: 80px;
+    width: 80px;
+    max-width: 160px;
   }
 </style>
 
@@ -116,6 +122,21 @@ function updateStatus(ip_address, element) {
     }, 30000);
   {% endif %}
 {% endif %}
+
+function resizeInput() {
+  var input = document.getElementById("cron_request");
+  input.style.width = (input.value.length + 1) * 8 + "px";
+}
+
+function add_cron_button_check(cronExpression) {
+  const cronRegex = /^(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)$/;
+  if (!cronRegex.test(cronExpression)) {
+    alert("Invalid cron expression!\nSee : https://crontab.guru/");
+    return false; // prevent form submission
+  }
+  // continue with form submission
+  return true;
+}
 </script>
 
 <header>
@@ -130,7 +151,22 @@ function updateStatus(ip_address, element) {
         <p class="card-info-right">IP: {{ computer.ip_address }}</p>
         <p class="card-info-right">MAC: {{ computer.mac_address }}</p>
         {% if computer.cron_schedule is defined %}
-          <p class="card-info-right">Cron: {{ computer.cron_schedule }}</p>
+          <p class="card-info-right" style="display: inline-block;">Cron: {{ computer.cron_schedule }}</p>
+          {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
+            <form method="POST" action="/delete_cron" style="display: inline-block;">
+              <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+              <input type="submit" value="Delete Cron" style="background-color: #e44444;"  onclick="return confirm('Are you sure you want to delete Cron?');">
+            </form>
+          {% endif %}
+        {% else %}
+          {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
+            <p class="card-info-right" style="display: inline-block;">Cron: </p>
+            <form method="POST" action="/add_cron" style="display: inline-block;" onsubmit="return add_cron_button_check(this.elements['cron_request'].value)">
+              <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+              <input type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
+              <input type="submit" value="Add Cron" style="background-color: #6aa84f;">
+            </form>
+          {% endif %} 
         {% endif %}
       </div>
       <div class="card-footer">
@@ -139,17 +175,6 @@ function updateStatus(ip_address, element) {
           <input type="submit" value="Wake up">
         </form>
         {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
-          {% if computer.cron_schedule is defined %}
-            <form method="POST" action="/delete_cron" style="display: inline-block;">
-              <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-              <input type="submit" value="Delete Cron" style="background-color: #e44444;">
-            </form>
-          {% else %}
-            <form method="POST" action="/add_cron" style="display: inline-block;">
-              <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-              <input type="submit" value="Add Cron" style="background-color: #6aa84f;">
-            </form>
-          {% endif %}
           <form method="POST" action="/delete_computer" style="display: inline-block;">
             <input type="hidden" name="name" value="{{ computer.name }}">
             <input type="submit" value="Delete" style="background-color: #ff0000;" onclick="return confirm('Are you sure you want to delete this computer?');">
@@ -182,4 +207,3 @@ function updateStatus(ip_address, element) {
   </form>
 </div>
 {% endif %}
-

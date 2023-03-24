@@ -8,25 +8,37 @@ port = os.environ.get('PORT', 5000)
 
 app = Flask(__name__, static_folder='templates')
 
-# Load the list of computers from the configuration file
-computers = []
-with open('computers.txt') as f:
-  for line in f:
-    name, mac_address, ip_address = line.strip().split(',')
-    computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address})
 
-# Load the cron schedule information for each computer
-with open('/etc/cron.d/gptwol') as f:
-  for line in f:
-    if not line.startswith('#'):
-      fields = line.strip().split()
-      schedule = ' '.join(fields[:5])
-      user = fields[5]
-      command = ' '.join(fields[6:])
-      mac_address = command.split()[-1]
-      computer = next((c for c in computers if c['mac_address'] == mac_address), None)
-      if computer:
-        computer['cron_schedule'] = schedule
+def load_computers():
+  # Load the list of computers from the configuration file
+  computers = []
+  filename = 'computers.txt'
+  if not os.path.exists(filename):
+      open(filename, 'w').close()  # create the file if it doesn't exist
+  with open(filename) as f:
+    for line in f:
+      name, mac_address, ip_address = line.strip().split(',')
+      computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address})
+
+  # Load the cron schedule information for each computer
+  cron_filename = '/etc/cron.d/gptwol'
+  if not os.path.exists(cron_filename):
+      open(cron_filename, 'w').close()  # create the file if it doesn't exist
+  with open(cron_filename) as f:
+    for line in f:
+      if not line.startswith('#'):
+        fields = line.strip().split()
+        schedule = ' '.join(fields[:5])
+        user = fields[5]
+        command = ' '.join(fields[6:])
+        mac_address = command.split()[-1]
+        computer = next((c for c in computers if c['mac_address'] == mac_address), None)
+        if computer:
+          computer['cron_schedule'] = schedule
+
+  return computers
+
+computers = load_computers()
 
 def send_wol_packet(mac_address):
   # Convert the MAC address to a packed binary string
@@ -46,6 +58,7 @@ def is_computer_awake(ip_address, timeout=1):
 ### APP
 @app.route('/')
 def wol_form():
+  computers = load_computers()
   return render_template('wol_form.html', computers=computers, is_computer_awake=is_computer_awake, os=os)
 
 @app.route('/delete_computer', methods=['POST'])
@@ -79,6 +92,46 @@ def add_computer():
     for computer in computers:
       f.write('{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address']))
   return redirect(url_for('wol_form'))
+
+@app.route('/add_cron', methods=['POST'])
+def add_cron():
+  # Add Cron function
+  request_mac_address = request.form['mac_address']
+  request_cron = request.form['cron_request']
+  cron_command = f"{request_cron} root /usr/local/bin/wakeonlan {request_mac_address}"
+  with open("/etc/cron.d/gptwol", "a") as f:
+    f.write(f"{cron_command}\n")
+  return redirect('/')
+
+@app.route('/delete_cron', methods=['POST'])
+def delete_cron():
+  request_mac_address = request.form['mac_address']
+  with open('/etc/cron.d/gptwol', 'r') as f:
+    lines = f.readlines()
+
+  # Look for the line with the specified MAC address and remove it
+  new_lines = []
+  deleted = False
+  for line in lines:
+    if line.startswith('#'):
+      new_lines.append(line)
+    else:
+      fields = line.strip().split()
+      schedule = ' '.join(fields[:5])
+      user = fields[5]
+      command = ' '.join(fields[6:])
+      mac_address = command.split()[-1]
+      if mac_address == request_mac_address:
+        deleted = True
+      else:
+        new_lines.append(line)
+
+    # If a line was deleted, write the new contents to the file
+  if deleted:
+    with open('/etc/cron.d/gptwol', 'w') as f:
+      f.writelines(new_lines)
+  return redirect('/')
+
 
 @app.route('/check_status')
 def check_status():
