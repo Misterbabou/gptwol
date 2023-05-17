@@ -54,16 +54,29 @@ def is_computer_awake(ip_address, timeout=1):
   result = subprocess.run(['ping', '-W', str(timeout), '-c', '1', ip_address], stdout=subprocess.DEVNULL)
   return result.returncode == 0
 
+def search_computers(computers, query):
+    query = query.lower()
+    return [computer for computer in computers if query in computer['name'].lower() or query in computer['mac_address'].lower() or query in computer['ip_address'].lower()]
 
 ### APP
 @app.route('/')
 def wol_form():
-  computers = load_computers()
-  return render_template('wol_form.html', computers=computers, is_computer_awake=is_computer_awake, os=os)
+    query = request.args.get('query')
+    computers = load_computers()
+    if query:
+        computers = search_computers(computers, query)
+    return render_template('wol_form.html', computers=computers, is_computer_awake=is_computer_awake, os=os, query=query)
 
 @app.route('/delete_computer', methods=['POST'])
 def delete_computer():
   name = request.form['name']
+
+  # Get the mac_address of the computer being deleted
+  mac_address = next((computer['mac_address'] for computer in computers if computer['name'] == name), None)
+
+  # Delete the cron schedule for the mac_address
+  delete_cron_entry(mac_address)
+
   computers[:] = [computer for computer in computers if computer['name'] != name]
   # Save the updated list of computers to the configuration file
   with open('computers.txt', 'w') as f:
@@ -105,7 +118,11 @@ def add_cron():
 
 @app.route('/delete_cron', methods=['POST'])
 def delete_cron():
-  request_mac_address = request.form['mac_address']
+    request_mac_address = request.form['mac_address']
+    delete_cron_entry(request_mac_address)
+    return redirect('/')
+
+def delete_cron_entry(request_mac_address):
   with open('/etc/cron.d/gptwol', 'r') as f:
     lines = f.readlines()
 
@@ -131,7 +148,6 @@ def delete_cron():
     with open('/etc/cron.d/gptwol', 'w') as f:
       f.writelines(new_lines)
   return redirect('/')
-
 
 @app.route('/check_status')
 def check_status():

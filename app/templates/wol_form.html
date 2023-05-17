@@ -1,4 +1,5 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
 <style>
   header {
@@ -52,10 +53,48 @@
     width: 80px;
     max-width: 160px;
   }
+
+  .search-form {
+    display: flex;
+    align-items: center;
+  }
+
+  .search-input,
+  .search-button,
+  .delete-button,
+  .add-button,
+  .clear-button {
+    padding: 8px;
+    background-color: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+  }
+
+  .search-input {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex: 1;
+    font-size: 14px;
+  }
+
+  .add-button:hover,
+  .search-button:hover {
+    color: #6aa84f;
+  }
+
+  .delete-button:hover,
+  .clear-button:hover {
+    color: #e44444;
+  }
+
+  .clear-button {
+    margin-left: 4px;
+  }
 </style>
 
 <script>
-
 function checkForm() {
   // Get the values of the form fields
   const name = document.getElementById('name').value;
@@ -137,6 +176,11 @@ function add_cron_button_check(cronExpression) {
   // continue with form submission
   return true;
 }
+
+function clearSearchInput() {
+  document.querySelector('.search-input').value = '';
+  window.location.href = '/';
+}
 </script>
 
 <header>
@@ -144,6 +188,15 @@ function add_cron_button_check(cronExpression) {
 </header>
 
 <div class="container">
+  <form method="GET" action="/" class="search-form">
+      <input type="text" name="query" placeholder="Search Name, MAC or IP" class="search-input" value="{{ query or '' }}">
+      <button type="submit" class="search-button">
+          <i class="fa fa-search"></i>
+      </button>
+      <button type="button" class="clear-button" onclick="clearSearchInput()">
+          <i class="fa fa-times"></i>
+      </button>
+  </form>
   {% for computer in computers %}
     <div class="card">
       <div class="card-body">
@@ -155,16 +208,20 @@ function add_cron_button_check(cronExpression) {
           {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
             <form method="POST" action="/delete_cron" style="display: inline-block;">
               <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-              <input type="submit" value="Delete Cron" style="background-color: #e44444;"  onclick="return confirm('Are you sure you want to delete Cron?');">
+              <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete Cron?');">
+                <i class="fas fa-trash-alt"></i>
+              </button>
             </form>
           {% endif %}
         {% else %}
           {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
-            <p class="card-info-right" style="display: inline-block;">Cron: </p>
+          <p class="card-info-right" style="display: inline-block;">Cron: </p>
             <form method="POST" action="/add_cron" style="display: inline-block;" onsubmit="return add_cron_button_check(this.elements['cron_request'].value)">
               <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
               <input type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
-              <input type="submit" value="Add Cron" style="background-color: #6aa84f;">
+              <button type="submit" class="add-button">
+                <i class="fas fa-plus"></i>
+              </button>
             </form>
           {% endif %} 
         {% endif %}
