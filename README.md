@@ -24,6 +24,7 @@ It was made mostly by chatGPT.
 - Check if IP and MAC provided are valid
 - cron job to wake up device
 - Check if Cron provided is valid
+- Search on cumputer Name, MAC or IP
 
 ## Special configuration you can change
 
