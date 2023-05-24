@@ -84,6 +84,6 @@ docker-compose up -d
 
 :heavy_check_mark: Remove Cron on Computer deletion (Added in 1.0.4)
 
-- Improve load page performance. For now it takes more than 1 second to test if a computer is awake with ping. If computers are down the load of the page takes 1 second or more.
+:heavy_check_mark: Improve load page performance due to ping timeout. (added in 1.0.5)
 
 - Add filter buttons to filter computer by Name or IP
