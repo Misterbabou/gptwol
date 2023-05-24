@@ -49,9 +49,9 @@ def send_wol_packet(mac_address):
   s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
   s.sendto(b'\xff' * 6 + packed_mac * 16, ('<broadcast>', 9))
 
-def is_computer_awake(ip_address, timeout=1):
+def is_computer_awake(ip_address, timeout=300):
   # Use the ping command with a timeout to check if the computer is awake
-  result = subprocess.run(['ping', '-W', str(timeout), '-c', '1', ip_address], stdout=subprocess.DEVNULL)
+  result = subprocess.run(['fping', '-t', str(timeout), '-c', '1', ip_address], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
   return result.returncode == 0
 
 def search_computers(computers, query):

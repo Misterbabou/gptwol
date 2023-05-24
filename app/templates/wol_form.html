@@ -1,98 +1,6 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
-<style>
-  header {
-    position: sticky;
-    top: 0; /* stick to the top of the viewport */
-    z-index: 1;
-    display: block;
-    text-align: center;
-    background-color: #333;
-    color: #fff;
-  }
-  .container {
-    padding-top: 10px;
-    padding-right: 50px;
-    padding-left: 50px;
-  }
-  .card {
-    margin-bottom: 20px;
-  }
-  .card-footer {
-    text-align: right;
-  }
-  input[type=submit] {
-    background-color: #4CAF50;
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    text-decoration: none;
-    cursor: pointer;
-  }
-  p.card-info-right {
-    text-align: right;
-  }
-  .status-indicator {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: inline-block;
-    border: 2px solid #000;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-  }
-  .status-indicator.awake {
-    background-color: #4CAF50;
-  }
-  .status-indicator.asleep {
-    background-color: #ff0000;
-  }
-
-  #cron_request {
-    min-width: 80px;
-    width: 80px;
-    max-width: 160px;
-  }
-
-  .search-form {
-    display: flex;
-    align-items: center;
-  }
-
-  .search-input,
-  .search-button,
-  .delete-button,
-  .add-button,
-  .clear-button {
-    padding: 8px;
-    background-color: transparent;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #888;
-  }
-
-  .search-input {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    flex: 1;
-    font-size: 14px;
-  }
-
-  .add-button:hover,
-  .search-button:hover {
-    color: #6aa84f;
-  }
-
-  .delete-button:hover,
-  .clear-button:hover {
-    color: #e44444;
-  }
-
-  .clear-button {
-    margin-left: 4px;
-  }
-</style>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 
 <script>
 function checkForm() {
@@ -183,7 +91,7 @@ function clearSearchInput() {
 }
 </script>
 
-<header>
+<header class="header" style="position: sticky; top: 0; z-index: 1; display: block; text-align: center; background-color: #333; color: #fff;">
   <h1>GPT Wake On Lan</h1>
 </header>
 
