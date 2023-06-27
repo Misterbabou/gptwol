@@ -19,7 +19,7 @@ It was made mostly by chatGPT.
 - Docker Image to deploy
 - Send Wake On Lan packets
 - Add or Delete Computer
-- Computers status check with ping request
+- Computers status check with ping request (timeout settings available)
 - Very low power usage (20 mb RAM)
 - Check if IP and MAC provided are valid
 - cron job to wake up device
@@ -52,6 +52,7 @@ services:
       #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers default is to allow
       #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status default is to allow
       #- REFRESH_PING=15 # Uncomment this line to change ping status check, can be 15 or 60 (seconds) default value is 30 seconds
+      #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms) default value is 300 miliseconds
     volumes:
       - ./computers.txt:/app/computers.txt
       - ./appdata/cron:/etc/cron.d

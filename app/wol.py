@@ -5,6 +5,9 @@ import subprocess
 import os
 
 port = os.environ.get('PORT', 5000)
+ping_timeout = os.environ.get('PING_TIMEOUT', 300)
+cron_filename = '/etc/cron.d/gptwol'
+computer_filename = 'computers.txt'
 
 app = Flask(__name__, static_folder='templates')
 
@@ -12,16 +15,14 @@ app = Flask(__name__, static_folder='templates')
 def load_computers():
   # Load the list of computers from the configuration file
   computers = []
-  filename = 'computers.txt'
-  if not os.path.exists(filename):
-      open(filename, 'w').close()  # create the file if it doesn't exist
-  with open(filename) as f:
+  if not os.path.exists(computer_filename):
+      open(computer_filename, 'w').close()  # create the file if it doesn't exist
+  with open(computer_filename) as f:
     for line in f:
       name, mac_address, ip_address = line.strip().split(',')
       computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address})
 
   # Load the cron schedule information for each computer
-  cron_filename = '/etc/cron.d/gptwol'
   if not os.path.exists(cron_filename):
       open(cron_filename, 'w').close()  # create the file if it doesn't exist
   with open(cron_filename) as f:
@@ -49,7 +50,7 @@ def send_wol_packet(mac_address):
   s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
   s.sendto(b'\xff' * 6 + packed_mac * 16, ('<broadcast>', 9))
 
-def is_computer_awake(ip_address, timeout=300):
+def is_computer_awake(ip_address, timeout=ping_timeout):
   # Use the ping command with a timeout to check if the computer is awake
   result = subprocess.run(['fping', '-t', str(timeout), '-c', '1', ip_address], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
   return result.returncode == 0
@@ -79,7 +80,7 @@ def delete_computer():
 
   computers[:] = [computer for computer in computers if computer['name'] != name]
   # Save the updated list of computers to the configuration file
-  with open('computers.txt', 'w') as f:
+  with open(computer_filename, 'w') as f:
     for computer in computers:
       f.write('{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address']))
   return redirect('/')
@@ -101,7 +102,7 @@ def add_computer():
 
   computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address})
   # Save the updated list of computers to the configuration file
-  with open('computers.txt', 'w') as f:
+  with open(computer_filename, 'w') as f:
     for computer in computers:
       f.write('{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address']))
   return redirect(url_for('wol_form'))
@@ -112,7 +113,7 @@ def add_cron():
   request_mac_address = request.form['mac_address']
   request_cron = request.form['cron_request']
   cron_command = f"{request_cron} root /usr/local/bin/wakeonlan {request_mac_address}"
-  with open("/etc/cron.d/gptwol", "a") as f:
+  with open(cron_filename, "a") as f:
     f.write(f"{cron_command}\n")
   return redirect('/')
 
@@ -123,7 +124,7 @@ def delete_cron():
     return redirect('/')
 
 def delete_cron_entry(request_mac_address):
-  with open('/etc/cron.d/gptwol', 'r') as f:
+  with open(cron_filename, 'r') as f:
     lines = f.readlines()
 
   # Look for the line with the specified MAC address and remove it
@@ -145,7 +146,7 @@ def delete_cron_entry(request_mac_address):
 
     # If a line was deleted, write the new contents to the file
   if deleted:
-    with open('/etc/cron.d/gptwol', 'w') as f:
+    with open(cron_filename, 'w') as f:
       f.writelines(new_lines)
   return redirect('/')
 
