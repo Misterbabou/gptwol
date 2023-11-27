@@ -52,7 +52,7 @@ services:
       #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers default is to allow
       #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status default is to allow
       #- REFRESH_PING=15 # Uncomment this line to change ping status check, can be 15 or 60 (seconds) default value is 30 seconds
-      #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms) default value is 300 miliseconds
+      #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms) default value is 300 milliseconds
     volumes:
       - ./computers.txt:/app/computers.txt
       - ./appdata/cron:/etc/cron.d
@@ -88,3 +88,7 @@ docker-compose up -d
 :heavy_check_mark: Improve load page performance due to ping timeout. (added in 1.0.5)
 
 - Add filter buttons to filter computer by Name or IP
+
+- Add a TCP port option to check availibility without using ICMP
+
+- Add OIDC Authentication (will require time)
