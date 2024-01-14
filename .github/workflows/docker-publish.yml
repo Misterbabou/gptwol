@@ -30,7 +30,7 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/squid:${{ env.VERSION }}
-            ${{ secrets.DOCKER_USERNAME }}/squid:latest
+            ${{ secrets.DOCKER_USERNAME }}/gptwol:${{ env.VERSION }}
+            ${{ secrets.DOCKER_USERNAME }}/gptwol:latest
             
           platforms: linux/amd64,linux/arm64,linux/arm/v7
