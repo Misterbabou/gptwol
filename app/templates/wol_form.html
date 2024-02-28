@@ -8,6 +8,7 @@ function checkForm() {
   const name = document.getElementById('name').value;
   const ipAddress = document.getElementById('ip_address').value;
   const macAddress = document.getElementById('mac_address').value;
+  const testType = document.getElementById('test_type').value;
 
   // Regular expressions to check the format of the IP and MAC address
   const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -38,9 +39,9 @@ function checkForm() {
 }
 
 
-function updateStatus(ip_address, element) {
+function updateStatus(ip_address, test_type, element) {
   // Make an HTTP GET request to the check_status endpoint
-  fetch(`/check_status?ip_address=${ip_address}`)
+  fetch(`/check_status?ip_address=${ip_address}&test_type=${test_type}`)
     .then(response => response.text())
     .then(status => {
       // Update the class of the element based on the returned status
@@ -59,7 +60,8 @@ function updateStatus(ip_address, element) {
     // Update the status of all computers
     for (let element of document.getElementsByClassName('status-indicator')) {
       const ip_address = element.getAttribute('data-ip-address');
-      updateStatus(ip_address, element);
+	  const test_type = element.getAttribute('data-test-type');
+      updateStatus(ip_address, test_type, element);
     }
   {% if os.environ.get('REFRESH_PING') == '60' %}
     }, 60000);
@@ -108,7 +110,7 @@ function clearSearchInput() {
   {% for computer in computers %}
     <div class="card">
       <div class="card-body">
-        <h5 class="card-title">{{ computer.name }} <span class="status-indicator {% if is_computer_awake(computer.ip_address) %}awake{% else %}asleep{% endif %}" data-ip-address="{{ computer.ip_address }}"></span></h5>
+        <h5 class="card-title">{{ computer.name }} <span class="status-indicator {% if is_computer_awake(computer.ip_address) %}awake{% else %}asleep{% endif %}" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}"></span></h5>
         <p class="card-info-right">IP: {{ computer.ip_address }}</p>
         <p class="card-info-right">MAC: {{ computer.mac_address }}</p>
         {% if computer.cron_schedule is defined %}
