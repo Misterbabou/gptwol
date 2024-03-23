@@ -124,6 +124,11 @@ function add_cron_button_check(cronExpression) {
   // continue with form submission
   return true;
 }
+
+function clearSearchInput() {
+  document.querySelector('.search-input').value = '';
+  window.location.href = '/';
+}
 </script>
 
 <header class="header" style="position: sticky; top: 0; z-index: 1; display: block; text-align: center; background-color: #333; color: #fff;">

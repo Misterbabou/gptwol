@@ -19,7 +19,7 @@ It was made mostly by chatGPT.
 - Docker Image to deploy
 - Send Wake On Lan packets
 - Add or Delete Computer
-- Computers status check with ping request (timeout settings available)
+- Computers status check with ping or tcp request (timeout settings available)
 - Very low power usage (20 mb RAM)
 - Check if IP and MAC provided are valid
 - cron job to wake up device
