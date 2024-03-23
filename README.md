@@ -89,6 +89,6 @@ docker-compose up -d
 
 - Add filter buttons to filter computer by Name or IP
 
-- Add a TCP port option to check availibility without using ICMP
+:heavy_check_mark: Add a TCP port option to check availibility without using ICMP (added in 2.0.1)
 
 - Add OIDC Authentication (will require time)
