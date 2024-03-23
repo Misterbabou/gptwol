@@ -7,7 +7,7 @@ import os
 port = os.environ.get('PORT', 5000)
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
 cron_filename = '/etc/cron.d/gptwol'
-computer_filename = '/computers.txt'
+computer_filename = 'computers.txt'
 
 app = Flask(__name__, static_folder='templates')
 
@@ -59,35 +59,40 @@ def send_wol_packet(mac_address):
   s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
   s.sendto(b'\xff' * 6 + packed_mac * 16, ('<broadcast>', 9))
 
+def is_computer_awake(ip_address, port, timeout=ping_timeout):
+    if not port or port.lower() == 'icmp':
+        return is_computer_awake_icmp(ip_address)
+    else:
+        port_int = int(port)
+        return is_computer_awake_tcp(ip_address, port_int)
+
 def is_computer_awake_icmp(ip_address, timeout=ping_timeout):
   # Use the ping command with a timeout to check if the computer is awake
   result = subprocess.run(['fping', '-t', str(timeout), '-c', '1', ip_address], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
   return result.returncode == 0
 
-# Check if computer is awake using TCP port check
 def is_computer_awake_tcp(ip_address, port, timeout=ping_timeout):
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(timeout)
-            s.connect((ip_address, port))
+        with socket.create_connection((ip_address, port), timeout=timeout):
             return True
-    except socket.timeout:
-        return False
-    except OSError:
+    except (socket.timeout, OSError):
         return False
 
 def search_computers(computers, query):
     query = query.lower()
     return [computer for computer in computers if query in computer['name'].lower() or query in computer['mac_address'].lower() or query in computer['ip_address'].lower()]
 
-### APP
+def initial_computer_status(ip_address, test_type):
+    return "asleep"
+
 @app.route('/')
 def wol_form():
     query = request.args.get('query')
     computers = load_computers()
+
     if query:
-        computers = search_computers(computers, query)
-    return render_template('wol_form.html', computers=computers, is_computer_awake=is_computer_awake_icmp, os=os, query=query)
+        computers = search_computers(computers, query)   
+    return render_template('wol_form.html', computers=computers, is_computer_awake=initial_computer_status, os=os, query=query)
 
 @app.route('/delete_computer', methods=['POST'])
 def delete_computer():
@@ -111,7 +116,7 @@ def add_computer():
   name = request.form['name']
   mac_address = request.form['mac_address']
   ip_address = request.form['ip_address']
-  test_type = 'icmp'
+  test_type = request.form['test_type']
 
   # Check if the computer name already exists
   if check_name_exist(name, computers):
@@ -176,21 +181,10 @@ def delete_cron_entry(request_mac_address):
 def check_status():
   ip_address = request.args.get('ip_address')
   test_type = request.args.get('test_type')
-
-  if not test_type or test_type.lower() == 'icmp':
-      if is_computer_awake_icmp(ip_address):
-          return 'awake'
-      else:
-          return 'asleep'
+  if is_computer_awake(ip_address,test_type):
+      return 'awake'
   else:
-      try:
-          port = int(test_type)  # Convert test_type to integer (port number)
-          if is_computer_awake_tcp(ip_address, port):
-              return 'awake'
-          else:
-              return 'asleep'
-      except ValueError:
-          return 'Invalid port number'
+      return 'asleep'
 
 @app.route('/check_name_exist')
 def check_name_exist(name, computers):
@@ -201,23 +195,22 @@ def check_name_exist(name, computers):
 
 @app.route('/wakeup', methods=['POST'])
 def wol_send():
-  mac_address = request.form['mac_address']
-  computer = next(c for c in computers if c['mac_address'] == mac_address)
-  ip_address = computer['ip_address']
-  if is_computer_awake_icmp(ip_address):
-    return '''
-    <script>
-      alert('Computer is Already Awake');
-      window.history.back();
-    </script>
-    '''
-  else:
-    send_wol_packet(mac_address)
-    return '''
-    <script>
-      alert('Magic Packet Send !');
-      window.history.back();
-    </script>
+    mac_address = request.form['mac_address']
+    computer = next(c for c in computers if c['mac_address'] == mac_address)
+    ip_address = computer['ip_address']
+    test_type = computer['test_type']
+
+    if is_computer_awake(ip_address, test_type):
+        message = 'Computer is Already Awake'
+    else:
+        send_wol_packet(mac_address)
+        message = 'Magic Packet Sent !'
+
+    return f'''
+        <script>
+            alert('{message}');
+            window.history.back();
+        </script>
     '''
 
 if __name__ == '__main__':

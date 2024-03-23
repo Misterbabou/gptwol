@@ -7,8 +7,12 @@
   .card {
     margin-bottom: 20px;
   }
+  .card-body {
+    padding: 10px;
+  }
   .card-footer {
     text-align: right;
+    padding: 10px;
   }
   input[type=submit] {
     background-color: #4CAF50;
