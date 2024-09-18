@@ -68,12 +68,12 @@ Run the application
 docker-compose up -d
 ```
 
-## :warning: Notes
-
-- The app container needs to run in host network mode to send the wakeonlan command on your local network.
-- Make sure that the PORT you are using is free on your host computer
-- Make sure that BIOS settings and remote OS is configure to allow Wake On Lan
-- Don't expose gptwol directly on internet without proper authentication
+> [!CAUTION]
+>
+>- The app container needs to run in host network mode to send the wakeonlan command on your local network.
+>- Make sure that the PORT you are using is free on your host computer
+>- Make sure that BIOS settings and remote OS is configure to allow Wake On Lan
+>- Don't expose gptwol directly on internet without proper authentication
 
 ## Roadmap 
 
