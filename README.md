@@ -35,7 +35,7 @@ It was made mostly by chatGPT.
 ## Docker Configuration
 > [!NOTE]
 >
->It's recommanded to use docker compose to run this application
+>It's recommanded to use docker compose to run this application. [Install documentation](https://docs.docker.com/compose/install/)
 
 > [!CAUTION]
 >
