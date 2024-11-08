@@ -32,14 +32,22 @@ It was made mostly by chatGPT.
 - Disable Delete or Add Computers
 - Change the port of the Web UI
 
-## Docker Conf
+## Docker Configuration
+> [!NOTE]
+>
+>It's recommanded to use docker compose to run this application
 
-It's recommanded to use docker compose to run this application
+> [!CAUTION]
+>
+>- The app container needs to run in host network mode to send the wakeonlan command on your local network.
+>- Make sure that the PORT you are using is free on your host computer
+>- Make sure that BIOS settings and remote OS is configure to allow Wake On Lan
+>- Don't expose gptwol directly on internet without proper authentication
 
+### With docker compose
 
 Create `docker-compose.yml` file:
 ```
-version: "3"
 services:
   gptwol:
     container_name: gptwol
@@ -47,12 +55,12 @@ services:
     network_mode: host
     restart: unless-stopped
     environment:
-      - PORT=8080 #Free Port on Your host default is 5000
-      - TZ=Europe/Paris #Set your timezone for Cron default is UTC
-      #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers default is to allow
-      #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status default is to allow
-      #- REFRESH_PING=15 # Uncomment this line to change ping status check, can be 15 or 60 (seconds) default value is 30 seconds
-      #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms) default value is 300 milliseconds
+      - PORT=8080 #Free Port on Your host; default is 5000
+      - TZ=Europe/Paris #Set your timezone for Cron; default is UTC
+      #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers; default is to allow
+      #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status; default is to allow
+      #- REFRESH_PING=15 # Uncomment this line to change ping status check, can be 15 or 60 (seconds); default value is 30 seconds
+      #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
     volumes:
       - ./computers.txt:/app/computers.txt
       - ./appdata/cron:/etc/cron.d
@@ -65,15 +73,28 @@ touch computers.txt
 
 Run the application
 ```
-docker-compose up -d
+docker compose up -d
 ```
 
-> [!CAUTION]
->
->- The app container needs to run in host network mode to send the wakeonlan command on your local network.
->- Make sure that the PORT you are using is free on your host computer
->- Make sure that BIOS settings and remote OS is configure to allow Wake On Lan
->- Don't expose gptwol directly on internet without proper authentication
+### With docker
+
+Create the file for storing computers (the mounted file on docker command)
+```
+touch computers.txt
+```
+
+Run the application
+```
+docker run -d \
+  --name=gptwol \
+  --network="host" \
+  --restart unless-stopped \
+  -e PORT=8080 \
+  -e TZ=Europe/Paris \
+  -v ./computers.txt:/app/computers.txt \
+  -v ./appdata/cron:/etc/cron.d \
+  misterbabou/gptwol:latest
+```
 
 ## Roadmap 
 
@@ -92,3 +113,5 @@ docker-compose up -d
 :heavy_check_mark: Add a TCP port option to check availibility without using ICMP (added in 2.0.1)
 
 - Add OIDC Authentication (will require time)
+
+- moove computers.txt in an other directory not to mount a file but a directory to the docker container
