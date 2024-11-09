@@ -12,4 +12,4 @@ RUN pip install -r /app/requirements.txt
 WORKDIR /app
 
 # start App and cron
-CMD ["/bin/bash", "-c", "systemctl enable cron --now && python3 wol.py"]
+CMD ["/bin/bash", "-c", "systemctl enable cron --now && gunicorn wol:app"]
