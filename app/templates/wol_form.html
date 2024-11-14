@@ -1,225 +1,244 @@
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wake On LAN tool to manage and wake computers on your network.">
+    <title>GPTWOL</title>
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/gptwol.png') }}"/>
+    <link rel="icon" href="{{ url_for('static', filename='images/gptwol.png') }}" type="image/png"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+      function checkForm() {
+        // Get the values of the form fields
+        const name = document.getElementById('name').value;
+        const ipAddress = document.getElementById('ip_address').value;
+        const macAddress = document.getElementById('mac_address').value;
+        const testType = document.getElementById('test_type').value;
 
-<script>
-function checkForm() {
-  // Get the values of the form fields
-  const name = document.getElementById('name').value;
-  const ipAddress = document.getElementById('ip_address').value;
-  const macAddress = document.getElementById('mac_address').value;
-  const testType = document.getElementById('test_type').value;
+        // Regular expressions to check the format of the IP and MAC address
+        const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        const macRegex = /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/;
 
-  // Regular expressions to check the format of the IP and MAC address
-  const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-  const macRegex = /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/;
+        // Check if the values are valid
+        if (!name || !ipRegex.test(ipAddress) || !macRegex.test(macAddress)) {
+          if (!name || !ipRegex.test(ipAddress) && !macRegex.test(macAddress)) {
+            alert('IP and MAC provided are invalid');
+          } else if (!name || !ipRegex.test(ipAddress)) {
+            alert('IP provided is invalid');
+          } else {
+            alert('MAC provided is invalid');
+          }
+          return false;
+        }
 
-  // Check if the values are valid
-  if (!name || !ipRegex.test(ipAddress) || !macRegex.test(macAddress)) {
-    if (!name || !ipRegex.test(ipAddress) && !macRegex.test(macAddress)) {
-      alert('IP and MAC provided are invalid');
-    } else if (!name || !ipRegex.test(ipAddress)) {
-      alert('IP provided is invalid');
-    } else {
-      alert('MAC provided is invalid');
-    } 
-    return false;
-  }
-  
-  if (testType !== 'icmp' && !isValidPort(testType)) {
-    alert('Please enter either "icmp" or a valid TCP port number.');
-    return false;
-  }
+        if (testType !== 'icmp' && !isValidPort(testType)) {
+          alert('Please enter either "icmp" or a valid TCP port number.');
+          return false;
+        }
 
-  // Check if the name already exists
-  fetch(`/check_name_exists?name=${name}`)
-    .then(response => response.json())
-    .then(exists => {
-      if (exists) {
-        alert('A computer with this name already exists');
-        return false;
+        // Check if the name already exists
+        fetch(`/check_name_exists?name=${name}`)
+          .then(response => response.json())
+          .then(exists => {
+            if (exists) {
+              alert('A computer with this name already exists');
+              return false;
+            }
+            return true;
+          });
       }
-      return true;
-    });
-}
 
-function isValidPort(value) {
-  const portNumber = parseInt(value);
-  return !isNaN(portNumber) && portNumber >= 1 && portNumber <= 65535;
-}
+      function isValidPort(value) {
+        const portNumber = parseInt(value);
+        return !isNaN(portNumber) && portNumber >= 1 && portNumber <= 65535;
+      }
 
-window.addEventListener('load', function() {
-    // Get all status indicator elements
-    const statusIndicators = document.querySelectorAll('.status-indicator');
+      window.addEventListener('load', function() {
+          // Get all status indicator elements
+          const statusIndicators = document.querySelectorAll('.status-indicator');
 
-    // Loop through each status indicator element
-    statusIndicators.forEach(function(indicator) {
-        // Extract IP address and test type from the data attributes
-        const ip_address = indicator.getAttribute('data-ip-address');
-        const test_type = indicator.getAttribute('data-test-type');
-        const check_status_url = "{{ url_for('check_status') }}";
+          // Loop through each status indicator element
+          statusIndicators.forEach(function(indicator) {
+            // Extract IP address and test type from the data attributes
+            const ip_address = indicator.getAttribute('data-ip-address');
+            const test_type = indicator.getAttribute('data-test-type');
+            const check_status_url = "{{ url_for('check_status') }}";
 
-         // Make an HTTP GET request to fetch the initial status
-        fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
-            .then(response => response.text())
-            .then(status => {
+             // Make an HTTP GET request to fetch the initial status
+            fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
+              .then(response => response.text())
+              .then(status => {
                 // Update the class of the element based on the returned status
                 if (status === 'awake') {
-                    indicator.classList.remove('asleep');
-                    indicator.classList.add('awake');
+                  indicator.classList.remove('asleep');
+                  indicator.classList.add('awake');
                 } else {
-                    indicator.classList.remove('awake');
-                    indicator.classList.add('asleep');
+                  indicator.classList.remove('awake');
+                  indicator.classList.add('asleep');
                 }
-            })
-            .catch(error => {
+              })
+              .catch(error => {
                 console.error('Error fetching initial status:', error);
-            });
-    });
-});
+              });
+          });
+      });
 
-function updateStatus(ip_address, test_type, element) {
-  const check_status_url = "{{ url_for('check_status') }}";
-  // Make an HTTP GET request to the check_status endpoint
-  fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
-    .then(response => response.text())
-    .then(status => {
-      // Update the class of the element based on the returned status
-      if (status === 'awake') {
-        element.classList.remove('asleep');
-        element.classList.add('awake');
-      } else {
-        element.classList.remove('awake');
-        element.classList.add('asleep');
+      function updateStatus(ip_address, test_type, element) {
+        const check_status_url = "{{ url_for('check_status') }}";
+        // Make an HTTP GET request to the check_status endpoint
+        fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
+          .then(response => response.text())
+          .then(status => {
+            // Update the class of the element based on the returned status
+            if (status === 'awake') {
+              element.classList.remove('asleep');
+              element.classList.add('awake');
+            } else {
+              element.classList.remove('awake');
+              element.classList.add('asleep');
+            }
+          });
       }
-    });
-}
 
-{% if os.environ.get('DISABLE_REFRESH') != '1' %}
-  setInterval(() => {
-    // Update the status of all computers
-    for (let element of document.getElementsByClassName('status-indicator')) {
-      const ip_address = element.getAttribute('data-ip-address');
-	  const test_type = element.getAttribute('data-test-type');
-      updateStatus(ip_address, test_type, element);
-    }
-  {% if os.environ.get('REFRESH_PING') == '60' %}
-    }, 60000);
-  {% elif os.environ.get('REFRESH_PING') == '15' %}
-    }, 15000);
-  {% else %}
-    }, 30000);
-  {% endif %}
-{% endif %}
-
-function resizeInput() {
-  var input = document.getElementById("cron_request");
-  input.style.width = (input.value.length + 1) * 8 + "px";
-}
-
-function add_cron_button_check(cronExpression) {
-  const cronRegex = /^(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)$/;
-  if (!cronRegex.test(cronExpression)) {
-    alert("Invalid cron expression!\nSee : https://crontab.guru/");
-    return false; // prevent form submission
-  }
-  // continue with form submission
-  return true;
-}
-
-function clearSearchInput() {
-  document.querySelector('.search-input').value = '';
-  window.location.href = '/';
-}
-</script>
-
-<header class="header" style="position: sticky; top: 0; z-index: 1; display: block; text-align: center; background-color: #333; color: #fff;">
-  <h1>GPT Wake On Lan</h1>
-</header>
-
-<div class="container">
-  <form method="GET" action="/" class="search-form">
-      <input type="text" name="query" placeholder="Search Name, MAC or IP" class="search-input" value="{{ query or '' }}">
-      <button type="submit" class="search-button">
-          <i class="fa fa-search"></i>
-      </button>
-      <button type="button" class="clear-button" onclick="clearSearchInput()">
-          <i class="fa fa-times"></i>
-      </button>
-  </form>
-  {% for computer in computers %}
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title">{{ computer.name }} <span class="status-indicator {% if is_computer_awake(computer.ip_address, computer.test_type) %}awake{% else %}asleep{% endif %}" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}"></span></h5>
-        <p class="card-info-right">IP: {{ computer.ip_address }}</p>
-        <p class="card-info-right">MAC: {{ computer.mac_address }}</p>
-        {% if computer.test_type == 'icmp' %}
-          <p class="card-info-right">Status Check: ICMP</p>
+      {% if os.environ.get('DISABLE_REFRESH') != '1' %}
+        setInterval(() => {
+          // Update the status of all computers
+          for (let element of document.getElementsByClassName('status-indicator')) {
+            const ip_address = element.getAttribute('data-ip-address');
+               const test_type = element.getAttribute('data-test-type');
+            updateStatus(ip_address, test_type, element);
+          }
+        {% if os.environ.get('REFRESH_PING') == '60' %}
+          }, 60000);
+        {% elif os.environ.get('REFRESH_PING') == '15' %}
+          }, 15000);
         {% else %}
-          <p class="card-info-right">Status Check: TCP {{ computer.test_type }}</p>
+          }, 30000);
         {% endif %}
-        {% if computer.cron_schedule is defined %}
-          <p class="card-info-right" style="display: inline-block;">Cron: {{ computer.cron_schedule }}</p>
-          {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
-            <form method="POST" action="{{ url_for('delete_cron') }}" style="display: inline-block;">
-              <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-              <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete Cron?');">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </form>
-          {% endif %}
-        {% else %}
-          {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
-          <p class="card-info-right" style="display: inline-block;">Cron: </p>
-            <form method="POST" action="{{ url_for('add_cron') }}" style="display: inline-block;" onsubmit="return add_cron_button_check(this.elements['cron_request'].value)">
-              <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-              <input type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
-              <button type="submit" class="add-button">
-                <i class="fas fa-plus"></i>
-              </button>
-            </form>
-          {% endif %} 
-        {% endif %}
+      {% endif %}
+
+      function resizeInput() {
+        var input = document.getElementById("cron_request");
+        input.style.width = (input.value.length + 1) * 8 + "px";
+      }
+
+      function add_cron_button_check(cronExpression) {
+        const cronRegex = /^(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)$/;
+        if (!cronRegex.test(cronExpression)) {
+          alert("Invalid cron expression!\nSee : https://crontab.guru/");
+          return false; // prevent form submission
+        }
+        // continue with form submission
+        return true;
+      }
+
+      function clearSearchInput() {
+        document.querySelector('.search-input').value = '';
+        window.location.href = "{{ url_for('wol_form') }}";
+      }
+    </script>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-light bg-light sticky-top">
+      <div class="container">
+      <a class="navbar-brand" href="#">
+        <img src="{{ url_for('static', filename='images/gptwol.png') }}" width="30" height="30" alt="Logo" title="GPTWOL" loading="lazy">
+      </a>
+      <form method="GET" action="{{ url_for('wol_form') }}" class="search-form form-inline">
+          <input type="text" name="query" placeholder="Search Name, MAC or IP" class="search-input" value="{{ query or '' }}">
+          <button type="submit" class="search-button">
+              <i class="fa fa-search"></i>
+          </button>
+          <button type="button" class="clear-button" onclick="clearSearchInput()">
+              <i class="fa fa-times"></i>
+          </button>
+      </form>
       </div>
-      <div class="card-footer">
-        <form method="POST" action="{{ url_for('wol_send') }}" style="display: inline-block;">
-          <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-          <input type="submit" value="Wake up">
-        </form>
-        {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
+    </nav>
+
+    <div class="container">
+      {% for computer in computers %}
+      <div class="card mt-2">
+        <div class="card-body">
+          <h5 class="card-title">{{ computer.name }} <span class="status-indicator {% if is_computer_awake(computer.ip_address, computer.test_type) %}awake{% else %}asleep{% endif %}" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}"></span></h5>
+          <p class="text-end">IP: {{ computer.ip_address }}</p>
+          <p class="text-end">MAC: {{ computer.mac_address }}</p>
+          {% if computer.test_type == 'icmp' %}
+          <p class="text-end">Status Check: ICMP</p>
+          {% else %}
+          <p class="text-end">Status Check: TCP {{ computer.test_type }}</p>
+          {% endif %}
+          {% if computer.cron_schedule is defined %}
+          <p class="text-end" style="display: inline-block;">Cron: {{ computer.cron_schedule }}</p>
+            {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
+          <form method="POST" action="{{ url_for('delete_cron') }}" style="display: inline-block;">
+            <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+            <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete Cron?');">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </form>
+            {% endif %}
+          {% else %}
+            {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
+          <p class="text-end" style="display: inline-block;">Cron: </p>
+          <form method="POST" action="{{ url_for('add_cron') }}" style="display: inline-block;" onsubmit="return add_cron_button_check(this.elements['cron_request'].value)">
+            <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+            <input type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
+            <button type="submit" class="add-button">
+               <i class="fas fa-plus"></i>
+            </button>
+          </form>
+            {% endif %}
+          {% endif %}
+        </div>
+        <div class="card-footer text-end">
+          <form method="POST" action="{{ url_for('wol_send') }}" style="display: inline-block;">
+            <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+            <input type="submit" value="Wake up" class="btn btn-outline-success">
+          </form>
+          {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
           <form method="POST" action="{{ url_for('delete_computer') }}" style="display: inline-block;">
             <input type="hidden" name="name" value="{{ computer.name }}">
-            <input type="submit" value="Delete" style="background-color: #ff0000;" onclick="return confirm('Are you sure you want to delete this computer?');">
+            <input type="submit" value="Delete" onclick="return confirm('Are you sure you want to delete this computer?');" class="btn btn-outline-danger">
           </form>
-        {% endif %}
-        </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
+    <div class="container">
+      <div class="card mt-2 mb-2">
+      <div class="card-body">
+      <form method="POST" action="{{ url_for('add_computer') }}" onsubmit="return checkForm()">
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" class="form-control" name="name" id="name" required>
+        </div>
+        <div class="form-group">
+          <label for="mac_address">MAC address</label>
+          <input type="text" class="form-control" name="mac_address" id="mac_address" placeholder="00:11:22:33:44:55" required>
+        </div>
+        <div class="form-group">
+          <label for="ip_address">IP address</label>
+          <input type="text" class="form-control" name="ip_address" id="ip_address" placeholder="192.168.0.1" required>
+        </div>
+        <div class="form-group">
+          <label for="test_type">Status Check</label>
+          <input type="text" class="form-control" name="test_type" id="test_type" placeholder="icmp or port number" required>
+        </div>
+        <div class="text-center">
+          <button type="submit" class="btn btn-outline-primary mt-3">Add computer</button>
+        </div>
+      </form>
+      </div>
       </div>
     </div>
-  {% endfor %}
-</div>
-
-{% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
-<div class="container" style="border: 1px solid #ccc;">
-  <form method="POST" action="{{ url_for('add_computer') }}" onsubmit="return checkForm()">
-    <div class="form-group">
-      <label for="name">Name</label>
-      <input type="text" class="form-control" name="name" id="name" required>
-    </div>
-    <div class="form-group">
-      <label for="mac_address">MAC address</label>
-      <input type="text" class="form-control" name="mac_address" id="mac_address" placeholder="00:11:22:33:44:55" required>
-    </div>
-    <div class="form-group">
-      <label for="ip_address">IP address</label>
-      <input type="text" class="form-control" name="ip_address" id="ip_address" placeholder="192.168.0.1" required>
-    </div>
-    <div class="form-group">
-      <label for="test_type">Status Check</label>
-      <input type="text" class="form-control" name="test_type" id="test_type" placeholder="icmp or port number" required>
-    </div>
-    <div class="text-center">
-        <button type="submit" class="btn btn-primary">Add computer</button>
-    </div>
-  </form>
-</div>
-{% endif %}
+    {% endif %}
+  </body>
+</html>
