@@ -57,9 +57,10 @@ window.addEventListener('load', function() {
         // Extract IP address and test type from the data attributes
         const ip_address = indicator.getAttribute('data-ip-address');
         const test_type = indicator.getAttribute('data-test-type');
+        const check_status_url = "{{ url_for('check_status') }}";
 
-        // Make an HTTP GET request to fetch the initial status
-        fetch(`/check_status?ip_address=${ip_address}&test_type=${test_type}`)
+         // Make an HTTP GET request to fetch the initial status
+        fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
             .then(response => response.text())
             .then(status => {
                 // Update the class of the element based on the returned status
@@ -78,8 +79,9 @@ window.addEventListener('load', function() {
 });
 
 function updateStatus(ip_address, test_type, element) {
+  const check_status_url = "{{ url_for('check_status') }}";
   // Make an HTTP GET request to the check_status endpoint
-  fetch(`/check_status?ip_address=${ip_address}&test_type=${test_type}`)
+  fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
     .then(response => response.text())
     .then(status => {
       // Update the class of the element based on the returned status
@@ -159,7 +161,7 @@ function clearSearchInput() {
         {% if computer.cron_schedule is defined %}
           <p class="card-info-right" style="display: inline-block;">Cron: {{ computer.cron_schedule }}</p>
           {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
-            <form method="POST" action="/delete_cron" style="display: inline-block;">
+            <form method="POST" action="{{ url_for('delete_cron') }}" style="display: inline-block;">
               <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
               <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete Cron?');">
                 <i class="fas fa-trash-alt"></i>
@@ -169,7 +171,7 @@ function clearSearchInput() {
         {% else %}
           {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
           <p class="card-info-right" style="display: inline-block;">Cron: </p>
-            <form method="POST" action="/add_cron" style="display: inline-block;" onsubmit="return add_cron_button_check(this.elements['cron_request'].value)">
+            <form method="POST" action="{{ url_for('add_cron') }}" style="display: inline-block;" onsubmit="return add_cron_button_check(this.elements['cron_request'].value)">
               <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
               <input type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
               <button type="submit" class="add-button">
@@ -180,12 +182,12 @@ function clearSearchInput() {
         {% endif %}
       </div>
       <div class="card-footer">
-        <form method="POST" action="/wakeup" style="display: inline-block;">
+        <form method="POST" action="{{ url_for('wol_send') }}" style="display: inline-block;">
           <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
           <input type="submit" value="Wake up">
         </form>
         {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
-          <form method="POST" action="/delete_computer" style="display: inline-block;">
+          <form method="POST" action="{{ url_for('delete_computer') }}" style="display: inline-block;">
             <input type="hidden" name="name" value="{{ computer.name }}">
             <input type="submit" value="Delete" style="background-color: #ff0000;" onclick="return confirm('Are you sure you want to delete this computer?');">
           </form>
@@ -198,7 +200,7 @@ function clearSearchInput() {
 
 {% if os.environ.get('DISABLE_ADD_DEL') != '1' %}
 <div class="container" style="border: 1px solid #ccc;">
-  <form method="POST" action="/add_computer" onsubmit="return checkForm()">
+  <form method="POST" action="{{ url_for('add_computer') }}" onsubmit="return checkForm()">
     <div class="form-group">
       <label for="name">Name</label>
       <input type="text" class="form-control" name="name" id="name" required>

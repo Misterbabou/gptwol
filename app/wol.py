@@ -109,7 +109,7 @@ def delete_computer():
   with open(computer_filename, 'w') as f:
     for computer in computers:
       f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
-  return redirect('/')
+  return redirect(url_for('wol_form'))
 
 @app.route('/add_computer', methods=['POST'])
 def add_computer():
@@ -142,13 +142,13 @@ def add_cron():
   cron_command = f"{request_cron} root /usr/local/bin/wakeonlan {request_mac_address}"
   with open(cron_filename, "a") as f:
     f.write(f"{cron_command}\n")
-  return redirect('/')
+  return redirect(url_for('wol_form'))
 
 @app.route('/delete_cron', methods=['POST'])
 def delete_cron():
     request_mac_address = request.form['mac_address']
     delete_cron_entry(request_mac_address)
-    return redirect('/')
+    return redirect(url_for('wol_form'))
 
 def delete_cron_entry(request_mac_address):
   with open(cron_filename, 'r') as f:
@@ -175,7 +175,7 @@ def delete_cron_entry(request_mac_address):
   if deleted:
     with open(cron_filename, 'w') as f:
       f.writelines(new_lines)
-  return redirect('/')
+  return redirect(url_for('wol_form'))
 
 @app.route('/check_status')
 def check_status():
