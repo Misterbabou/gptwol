@@ -109,9 +109,13 @@ docker run -d \
 
 :heavy_check_mark: Improve load page performance due to ping timeout. (added in 1.0.5)
 
-- Add filter buttons to filter computer by Name or IP
-
 :heavy_check_mark: Add a TCP port option to check availibility without using ICMP (added in 2.0.1)
+
+:heavy_check_mark: Run app on subpath (added in 2.1.0)
+
+:heavy_check_mark: Make app responsive for smaller screen (added in 2.1.0)
+
+- Add filter buttons to filter computer by Name or IP
 
 - Add OIDC Authentication (will require time)
 
