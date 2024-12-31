@@ -57,33 +57,33 @@
       }
 
       window.addEventListener('load', function() {
-          // Get all status indicator elements
-          const statusIndicators = document.querySelectorAll('.status-indicator');
+        // Get all status indicator elements
+        const statusIndicators = document.querySelectorAll('.status-indicator');
 
-          // Loop through each status indicator element
-          statusIndicators.forEach(function(indicator) {
-            // Extract IP address and test type from the data attributes
-            const ip_address = indicator.getAttribute('data-ip-address');
-            const test_type = indicator.getAttribute('data-test-type');
-            const check_status_url = "{{ url_for('check_status') }}";
+        // Loop through each status indicator element
+        statusIndicators.forEach(function(indicator) {
+          // Extract IP address and test type from the data attributes
+          const ip_address = indicator.getAttribute('data-ip-address');
+          const test_type = indicator.getAttribute('data-test-type');
+          const check_status_url = "{{ url_for('check_status') }}";
 
-             // Make an HTTP GET request to fetch the initial status
-            fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
-              .then(response => response.text())
-              .then(status => {
-                // Update the class of the element based on the returned status
-                if (status === 'awake') {
-                  indicator.classList.remove('asleep');
-                  indicator.classList.add('awake');
-                } else {
-                  indicator.classList.remove('awake');
-                  indicator.classList.add('asleep');
-                }
-              })
-              .catch(error => {
-                console.error('Error fetching initial status:', error);
-              });
-          });
+           // Make an HTTP GET request to fetch the initial status
+          fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
+            .then(response => response.text())
+            .then(status => {
+              // Update the class of the element based on the returned status
+              if (status === 'awake') {
+                indicator.classList.remove('asleep');
+                indicator.classList.add('awake');
+              } else {
+                indicator.classList.remove('awake');
+                indicator.classList.add('asleep');
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching initial status:', error);
+            });
+        });
       });
 
       function updateStatus(ip_address, test_type, element) {
@@ -108,7 +108,7 @@
           // Update the status of all computers
           for (let element of document.getElementsByClassName('status-indicator')) {
             const ip_address = element.getAttribute('data-ip-address');
-               const test_type = element.getAttribute('data-test-type');
+              const test_type = element.getAttribute('data-test-type');
             updateStatus(ip_address, test_type, element);
           }
         {% if os.environ.get('REFRESH_PING') == '60' %}
@@ -143,7 +143,7 @@
   </head>
 
   <body>
-    <nav class="navbar navbar-light bg-light sticky-top">
+    <nav class="navbar sticky-top" style="background-color: rgba(0, 0, 0, 0.05);">
       <div class="container">
         <a class="navbar-brand" href="#">
           <img src="{{ url_for('static', filename='images/gptwol.png') }}" width="30" height="30" alt="Logo">
@@ -151,12 +151,18 @@
         <form method="GET" action="{{ url_for('wol_form') }}" class="search-form form-inline">
           <input type="text" name="query" placeholder="Search Name, MAC or IP" class="search-input" value="{{ query or '' }}">
           <button type="submit" class="search-button">
-              <i class="fa fa-search"></i>
+            <i class="fa fa-search"></i>
           </button>
           <button type="button" class="clear-button" onclick="clearSearchInput()">
-              <i class="fa fa-times"></i>
+            <i class="fa fa-times"></i>
           </button>
         </form>
+      </div>
+      <div class="container flex-row-reverse">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="darkModeSwitch" checked aria-label="Switch between light and dark mode" data-bs-toggle="tooltip" data-bs-placement="top" title="Switch between light and dark mode">
+          <i class="fas fa-adjust"></i>
+        </div>
       </div>
     </nav>
 
@@ -245,9 +251,29 @@
     <div class="text-center fixed-bottom" style="background-color: rgba(0, 0, 0, 0.05);">
       <a data-mdb-ripple-init class="btn btn-link btn-floating btn-sm text-body m-1" href="https://github.com/Misterbabou/gptwol" target="_blank" rel="noopener noreferrer" role="button" data-mdb-ripple-color="dark">
         <i class="fab fa-github"></i>
-        <span class="small"> Version 2.1.2 </span>
+        <span class="small"> Version 2.1.3 </span>
       </a>
     </div>
     {% endif %}
+
+    <script>
+      document.addEventListener('DOMContentLoaded', (event) => {
+        const htmlElement = document.documentElement;
+        const switchElement = document.getElementById('darkModeSwitch');
+        const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const currentTheme = localStorage.getItem('bsTheme') || (prefersDarkScheme ? 'dark' : 'light');
+
+        htmlElement.setAttribute('data-bs-theme', currentTheme);
+        switchElement.checked = currentTheme === 'dark';
+
+        switchElement.addEventListener('change', function () {
+          const newTheme = this.checked ? 'dark' : 'light';
+          htmlElement.setAttribute('data-bs-theme', newTheme);
+          localStorage.setItem('bsTheme', newTheme);
+        });
+
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      });
+    </script>
   </body>
 </html>

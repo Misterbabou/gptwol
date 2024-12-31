@@ -25,6 +25,7 @@ It was made mostly by chatGPT.
 - cron job to wake up device
 - Check if Cron provided is valid
 - Search on cumputer Name, MAC or IP
+- Dark mode
 
 ## Special configuration you can change
 
@@ -115,6 +116,8 @@ docker run -d \
 :heavy_check_mark: Run app on subpath (added in 2.1.0)
 
 :heavy_check_mark: Make app responsive for smaller screen (added in 2.1.0)
+
+:heavy_check_mark: Add Dark Mode Switch (added in 2.1.3)
 
 - Add filter buttons to filter computer by Name or IP
 
