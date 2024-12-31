@@ -60,6 +60,7 @@ services:
       #- SCRIPT_NAME=/my-app #Uncomment this line to run the app under a prefix
       #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers; default is to allow
       #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status; default is to allow
+      #- DISABLE_VERSION_PRINT=1 #Uncomment this line to delete the sticky footer printing github link and Version
       #- REFRESH_PING=15 # Uncomment this line to change ping status check, can be 15 or 60 (seconds); default value is 30 seconds
       #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
     volumes:

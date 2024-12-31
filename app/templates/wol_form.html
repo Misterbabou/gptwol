@@ -144,11 +144,11 @@
 
   <body>
     <nav class="navbar navbar-light bg-light sticky-top">
-      <div class="container d-flex align-items-center">
-        <a class="navbar-brand d-flex align-items-center" href="#" title="Version 2.1.1">
+      <div class="container">
+        <a class="navbar-brand" href="#">
           <img src="{{ url_for('static', filename='images/gptwol.png') }}" width="30" height="30" alt="Logo">
         </a>
-        <form method="GET" action="{{ url_for('wol_form') }}" class="search-form form-inline ms-auto">
+        <form method="GET" action="{{ url_for('wol_form') }}" class="search-form form-inline">
           <input type="text" name="query" placeholder="Search Name, MAC or IP" class="search-input" value="{{ query or '' }}">
           <button type="submit" class="search-button">
               <i class="fa fa-search"></i>
@@ -156,7 +156,6 @@
           <button type="button" class="clear-button" onclick="clearSearchInput()">
               <i class="fa fa-times"></i>
           </button>
-          <a data-mdb-ripple-init class="btn btn-link btn-floating btn-lg text-body m-1" href="https://github.com/Misterbabou/gptwol" target="_blank" rel="noopener noreferrer" role="button" data-mdb-ripple-color="dark"><i class="fab fa-github"></i></a>
         </form>
       </div>
     </nav>
@@ -239,6 +238,15 @@
       </form>
       </div>
       </div>
+    </div>
+    {% endif %}
+
+    {% if os.environ.get('DISABLE_VERSION_PRINT') != '1' %}
+    <div class="text-center fixed-bottom" style="background-color: rgba(0, 0, 0, 0.05);">
+      <a data-mdb-ripple-init class="btn btn-link btn-floating btn-sm text-body m-1" href="https://github.com/Misterbabou/gptwol" target="_blank" rel="noopener noreferrer" role="button" data-mdb-ripple-color="dark">
+        <i class="fab fa-github"></i>
+        <span class="small"> Version 2.1.2 </span>
+      </a>
     </div>
     {% endif %}
   </body>
