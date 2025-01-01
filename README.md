@@ -61,9 +61,9 @@ services:
       #- SCRIPT_NAME=/my-app #Uncomment this line to run the app under a prefix
       #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers; default is to allow
       #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status; default is to allow
-      #- DISABLE_VERSION_PRINT=1 #Uncomment this line to delete the sticky footer printing github link and Version
-      #- REFRESH_PING=15 # Uncomment this line to change ping status check, can be 15 or 60 (seconds); default value is 30 seconds
+      #- REFRESH_INTERVAL=15 # Uncomment this line to change status check for icmp ou tcp, can be 15 or 60 (seconds); default value is 30 seconds
       #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
+      #- TCP_TIMEOUT=5 #Uncomment this line to change the time to wait for a tcp check (in s);  default value 1 second
     volumes:
       - ./computers.txt:/app/computers.txt
       - ./appdata/cron:/etc/cron.d

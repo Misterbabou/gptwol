@@ -1,6 +1,6 @@
 FROM python:3.13-slim
 
-RUN apt-get update && apt-get install -y fping systemctl cron
+RUN apt-get update && apt-get install -y fping systemctl cron netcat-traditional
 
 # Copy the application code
 COPY ./app /app

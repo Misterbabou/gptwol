@@ -6,11 +6,65 @@ import os
 
 port = os.environ.get('PORT', 5000)
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
+tcp_timeout = os.environ.get('TCP_TIMEOUT', 1)
 cron_filename = '/etc/cron.d/gptwol'
 computer_filename = 'computers.txt'
 
 app = Flask(__name__, static_folder='templates')
 
+def generate_modal_html(message, title):
+    return f'''
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="description" content="Wake On LAN tool to manage and wake computers on your network.">
+            <title>GPTWOL</title>
+            <link rel="shortcut icon" href="/">
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+            <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+            <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+        </head>
+        <body>
+            <!-- Modal -->
+            <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="messageModalLabel">{title}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            {message}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="closeModalButton">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                // Show the modal when the page loads
+                var myModal = new bootstrap.Modal(document.getElementById('messageModal'));
+                myModal.show();
+
+                // Redirect to root index when the close button is clicked
+                document.getElementById('closeModalButton').addEventListener('click', function() {{
+                    window.history.back();
+                }});
+
+                // Redirect to root index when the modal is closed (backdrop click or escape key)
+                document.getElementById('messageModal').addEventListener('hidden.bs.modal', function () {{
+                    window.history.back();
+                }});
+            </script>
+        </body>
+        </html>
+    '''
 
 def load_computers():
     # Load the list of computers from the configuration file
@@ -67,16 +121,14 @@ def is_computer_awake(ip_address, port, timeout=ping_timeout):
         return is_computer_awake_tcp(ip_address, port_int)
 
 def is_computer_awake_icmp(ip_address, timeout=ping_timeout):
-  # Use the ping command with a timeout to check if the computer is awake
+  # Use the fping command with a timeout to check if the computer is awake
   result = subprocess.run(['fping', '-t', str(timeout), '-c', '1', ip_address], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
   return result.returncode == 0
 
-def is_computer_awake_tcp(ip_address, port, timeout=ping_timeout):
-    try:
-        with socket.create_connection((ip_address, port), timeout=timeout):
-            return True
-    except (socket.timeout, OSError):
-        return False
+def is_computer_awake_tcp(ip_address, port, timeout=tcp_timeout):
+    # Use nc (netcat) to check if the TCP port is open
+    result = subprocess.run(['nc', '-z', '-w', str(timeout), ip_address, str(port)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return result.returncode == 0
 
 def search_computers(computers, query):
     query = query.lower()
@@ -85,70 +137,11 @@ def search_computers(computers, query):
 def initial_computer_status(ip_address, test_type):
     return "asleep"
 
-@app.route('/')
-def wol_form():
-    query = request.args.get('query')
-    computers = load_computers()
-
-    if query:
-        computers = search_computers(computers, query)   
-    return render_template('wol_form.html', computers=computers, is_computer_awake=initial_computer_status, os=os, query=query)
-
-@app.route('/delete_computer', methods=['POST'])
-def delete_computer():
-  name = request.form['name']
-
-  # Get the mac_address of the computer being deleted
-  mac_address = next((computer['mac_address'] for computer in computers if computer['name'] == name), None)
-
-  # Delete the cron schedule for the mac_address
-  delete_cron_entry(mac_address)
-
-  computers[:] = [computer for computer in computers if computer['name'] != name]
-  # Save the updated list of computers to the configuration file
-  with open(computer_filename, 'w') as f:
-    for computer in computers:
-      f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
-  return redirect(url_for('wol_form'))
-
-@app.route('/add_computer', methods=['POST'])
-def add_computer():
-  name = request.form['name']
-  mac_address = request.form['mac_address']
-  ip_address = request.form['ip_address']
-  test_type = request.form['test_type']
-
-  # Check if the computer name already exists
-  if check_name_exist(name, computers):
-    return '''
-    <script>
-      alert('Computer name already exists');
-      window.history.back();
-    </script>
-    '''
-
-  computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address, 'test_type': test_type})
-  # Save the updated list of computers to the configuration file
-  with open(computer_filename, 'w') as f:
-    for computer in computers:
-      f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
-  return redirect(url_for('wol_form'))
-
-@app.route('/add_cron', methods=['POST'])
-def add_cron():
-  # Add Cron function
-  request_mac_address = request.form['mac_address']
-  request_cron = request.form['cron_request']
-  cron_command = f"{request_cron} root /usr/local/bin/wakeonlan {request_mac_address}"
-  with open(cron_filename, "a") as f:
-    f.write(f"{cron_command}\n")
-  return redirect(url_for('wol_form'))
-
-@app.route('/delete_cron', methods=['POST'])
-def delete_cron():
-    request_mac_address = request.form['mac_address']
-    delete_cron_entry(request_mac_address)
-    return redirect(url_for('wol_form'))
+def check_name_exist(name, computers):
+  for computer in computers:
+    if computer['name'] == name:
+      return True
+  return False
 
 def delete_cron_entry(request_mac_address):
   with open(cron_filename, 'r') as f:
@@ -177,6 +170,66 @@ def delete_cron_entry(request_mac_address):
       f.writelines(new_lines)
   return redirect(url_for('wol_form'))
 
+@app.route('/')
+def wol_form():
+    query = request.args.get('query')
+    computers = load_computers()
+
+    if query:
+        computers = search_computers(computers, query)
+    return render_template('wol_form.html', computers=computers, is_computer_awake=initial_computer_status, os=os, query=query)
+
+@app.route('/delete_computer', methods=['POST'])
+def delete_computer():
+  name = request.form['name']
+
+  # Get the mac_address of the computer being deleted
+  mac_address = next((computer['mac_address'] for computer in computers if computer['name'] == name), None)
+
+  # Delete the cron schedule for the mac_address
+  delete_cron_entry(mac_address)
+
+  computers[:] = [computer for computer in computers if computer['name'] != name]
+  # Save the updated list of computers to the configuration file
+  with open(computer_filename, 'w') as f:
+    for computer in computers:
+      f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
+  return redirect(url_for('wol_form'))
+
+@app.route('/add_computer', methods=['POST'])
+def add_computer():
+  name = request.form['name']
+  mac_address = request.form['mac_address']
+  ip_address = request.form['ip_address']
+  test_type = request.form['test_type']
+
+  # Check if the computer name already exists
+  if check_name_exist(name, computers):
+        return generate_modal_html('Computer name already exists', 'Error')
+
+  computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address, 'test_type': test_type})
+  # Save the updated list of computers to the configuration file
+  with open(computer_filename, 'w') as f:
+    for computer in computers:
+      f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
+  return redirect(url_for('wol_form'))
+
+@app.route('/add_cron', methods=['POST'])
+def add_cron():
+  # Add Cron function
+  request_mac_address = request.form['mac_address']
+  request_cron = request.form['cron_request']
+  cron_command = f"{request_cron} root /usr/local/bin/wakeonlan {request_mac_address}"
+  with open(cron_filename, "a") as f:
+    f.write(f"{cron_command}\n")
+  return redirect(url_for('wol_form'))
+
+@app.route('/delete_cron', methods=['POST'])
+def delete_cron():
+    request_mac_address = request.form['mac_address']
+    delete_cron_entry(request_mac_address)
+    return redirect(url_for('wol_form'))
+
 @app.route('/check_status')
 def check_status():
   ip_address = request.args.get('ip_address')
@@ -186,19 +239,13 @@ def check_status():
   else:
       return 'asleep'
 
-@app.route('/check_name_exist')
-def check_name_exist(name, computers):
-  for computer in computers:
-    if computer['name'] == name:
-      return True
-  return False
-
 @app.route('/wakeup', methods=['POST'])
 def wol_send():
     mac_address = request.form['mac_address']
     computer = next(c for c in computers if c['mac_address'] == mac_address)
     ip_address = computer['ip_address']
     test_type = computer['test_type']
+    title = "Wakeup"
 
     if is_computer_awake(ip_address, test_type):
         message = 'Computer is Already Awake'
@@ -206,12 +253,7 @@ def wol_send():
         send_wol_packet(mac_address)
         message = 'Magic Packet Sent !'
 
-    return f'''
-        <script>
-            alert('{message}');
-            window.history.back();
-        </script>
-    '''
+    return generate_modal_html(message, title)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)

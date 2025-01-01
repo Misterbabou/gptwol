@@ -21,6 +21,8 @@
   max-width: 200px;
 }
 
+.darkmode-button,
+.about-button,
 .search-input,
 .search-button,
 .delete-button,
@@ -42,6 +44,7 @@
   margin-right: 4px;
 }
 
+.about-button:hover,
 .add-button:hover,
 .search-button:hover {
   color: #6aa84f;
