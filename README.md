@@ -12,7 +12,13 @@ It was made mostly by chatGPT.
 
 ## Screenshot 
 
-![gptwol-gui.png](/assets/gptwol-gui.png)
+| Dark Web                          | Light Web                          |
+| --------------------------------- | ---------------------------------- |
+| ![](/assets/gptwol-web-light.png) | ![](/assets/gptwol-web-dark.png)  |
+
+| Dark Mobile                       | Light Mobile                       |
+| --------------------------------- | ---------------------------------- |
+| ![](/assets/gptwol-mob-light.png) | ![](/assets/gptwol-mob-dark.png)  |
 
 ## Features 
 
