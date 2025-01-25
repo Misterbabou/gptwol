@@ -14,62 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
     <script>
-      // Function to show the error modal
-      function showError(messages) {
-        const errorModalBody = document.getElementById('errorModalBody');
-        errorModalBody.innerHTML = ''; // Clear previous messages
-
-        // Create list items for each error message
-        messages.forEach(message => {
-          const li = document.createElement('li');
-          li.textContent = message;
-          errorModalBody.appendChild(li);
-        });
-
-        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        errorModal.show(); // Show the modal
-      }
-
-      // ---
-      // Check Add computer form
-      function checkForm() {
-        // Get the values of the form fields
-        const name = document.getElementById('name').value;
-        const ipAddress = document.getElementById('ip_address').value;
-        const macAddress = document.getElementById('mac_address').value;
-        const testType = document.getElementById('test_type').value;
-
-        // Regular expressions to check the format of the IP and MAC address
-        const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-        const macRegex = /^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$/;
-
-        const errorMessages = [];
-
-        // Check if the values are valid
-        if (!name) {
-          errorMessages.push('Name is required.');
-        }
-        if (!ipRegex.test(ipAddress)) {
-          errorMessages.push('IP provided is invalid.');
-        }
-        if (!macRegex.test(macAddress)) {
-          errorMessages.push('MAC provided is invalid.');
-        }
-        if (testType !== 'icmp' && !isValidPort(testType)) {
-          errorMessages.push('Please enter either "icmp" or a valid TCP port number.');
-        }
-        if (errorMessages.length > 0) {
-          showError(errorMessages);
-          return false;
-        }
-        return true;
-      }
-
-      function isValidPort(value) {
-        const portNumber = parseInt(value);
-        return !isNaN(portNumber) && portNumber >= 1 && portNumber <= 65535;
-      }
-
       // ---
       // Status Indicator
       window.addEventListener('load', function() {
@@ -141,16 +85,6 @@
         input.style.width = (input.value.length + 1) * 8 + "px";
       }
 
-      function add_cron_button_check(cronExpression) {
-        const cronRegex = /^(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)\s+(\*|[0-9,-\/]*)$/;
-        if (!cronRegex.test(cronExpression)) {
-          alert("Invalid cron expression!\nSee : https://crontab.guru/");
-          return false; // prevent form submission
-        }
-        // continue with form submission
-        return true;
-      }
-
       function clearSearchInput() {
         document.querySelector('.search-input').value = '';
         window.location.href = "{{ url_for('wol_form') }}";
@@ -214,7 +148,7 @@
           {% else -%}
             {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
           <p class="text-end" style="display: inline-block;">Cron: </p>
-          <form method="POST" action="{{ url_for('add_cron') }}" style="display: inline-block;" onsubmit="return add_cron_button_check(this.elements['cron_request'].value)">
+          <form method="POST" action="{{ url_for('add_cron') }}" style="display: inline-block;">
             <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
             <input type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
             <button type="submit" class="add-button">
@@ -243,7 +177,7 @@
     <div class="container">
       <div class="card mt-2 mb-2">
       <div class="card-body">
-      <form method="POST" action="{{ url_for('add_computer') }}" onsubmit="return checkForm()">
+      <form method="POST" action="{{ url_for('add_computer') }}">
         <div class="form-group">
           <label for="name">Name</label>
           <input type="text" class="form-control" name="name" id="name" required>
@@ -300,28 +234,9 @@
               <a data-mdb-ripple-init class="btn btn-link btn-floating btn-sm text-body m-1" href="https://github.com/Misterbabou/gptwol" target="_blank" rel="noopener noreferrer" role="button" data-mdb-ripple-color="dark">
                 <i class="fab fa-github fa-2x"></i>
               </a>
-              <p><strong>Version:</strong> 3.0.0</p>
+              <p><strong>Version:</strong> 3.0.1</p>
               <p><strong>License:</strong> MIT</p>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="errorModalLabel">Error</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <ul id="errorModalBody" class="list-unstyled">
-              <!-- Error messages will be inserted here -->
-            </ul>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
