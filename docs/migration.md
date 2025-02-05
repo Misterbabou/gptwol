@@ -1,6 +1,6 @@
 # Migration page
 
-## Migrate from 3.0.1 to 4.0.0
+## Migrate from 3.0.1 to 4.0.0 or above
 
 To get ride of the file mounted volume computers.txt. computers.txt is now inside the `/app/db` path.
 
