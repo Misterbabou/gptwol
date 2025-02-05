@@ -71,13 +71,8 @@ services:
       #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
       #- TCP_TIMEOUT=5 #Uncomment this line to change the time to wait for a tcp check (in s);  default value 1 second
     volumes:
-      - ./computers.txt:/app/computers.txt
+      - ./appdata/db:/app/db
       - ./appdata/cron:/etc/cron.d
-```
-
-Create the file for storing computers (the mounted file on docker-compose)
-```
-touch computers.txt
 ```
 
 Run the application
@@ -87,11 +82,6 @@ docker compose up -d
 
 ### With docker
 
-Create the file for storing computers (the mounted file on docker command)
-```
-touch computers.txt
-```
-
 Run the application
 ```
 docker run -d \
@@ -100,7 +90,7 @@ docker run -d \
   --restart unless-stopped \
   -e PORT=8080 \
   -e TZ=Europe/Paris \
-  -v ./computers.txt:/app/computers.txt \
+  -v ./appdata/db:/app/db \
   -v ./appdata/cron:/etc/cron.d \
   misterbabou/gptwol:latest
 ```

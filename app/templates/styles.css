@@ -15,20 +15,9 @@
   background-color: #ff0000;
 }
 
-#cron_request {
-  min-width: 100px;
-  width: 100px;
-  max-width: 200px;
-}
-
-.darkmode-button,
-.about-button,
-.search-input,
-.search-button,
 .delete-button,
 .add-button,
-.clear-button {
-  padding: 8px;
+.search-input {
   background-color: transparent;
   border: none;
   font-size: 24px;
@@ -37,20 +26,9 @@
 }
 
 .search-input {
+  padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
   flex: 1;
   font-size: 14px;
-  margin-right: 4px;
-}
-
-.about-button:hover,
-.add-button:hover,
-.search-button:hover {
-  color: #6aa84f;
-}
-
-.delete-button:hover,
-.clear-button:hover {
-  color: #e44444;
 }

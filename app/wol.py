@@ -10,7 +10,8 @@ port = os.environ.get('PORT', 5000)
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
 tcp_timeout = os.environ.get('TCP_TIMEOUT', 1)
 cron_filename = '/etc/cron.d/gptwol'
-computer_filename = 'computers.txt'
+computer_filename = 'db/computers.txt'
+computer_old_filename = 'computers.txt'
 
 app = Flask(__name__, static_folder='templates')
 
@@ -72,6 +73,9 @@ def generate_modal_html(messages, title):
 def load_computers():
   # Load the list of computers from the configuration file
   computers = []
+  # Check for warning
+  if os.path.exists(computer_old_filename):
+    os.environ['OLD_COMPUTER_FILE_WARNING'] = 'true'
   if not os.path.exists(computer_filename):
     open(computer_filename, 'w').close()  # create the file if it doesn't exist
   with open(computer_filename) as f:
@@ -268,6 +272,35 @@ def add_computer():
     return generate_modal_html(messages, 'Add Computer Error')
 
   computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address, 'test_type': test_type})
+  # Save the updated list of computers to the configuration file
+  with open(computer_filename, 'w') as f:
+    for computer in computers:
+      f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
+  return redirect(url_for('wol_form'))
+
+@app.route('/edit_computer', methods=['POST'])
+def edit_computer():
+  name = request.form['name']
+  mac_address = request.form['mac_address']
+  ip_address = request.form['ip_address']
+  test_type = request.form['test_type']
+
+  messages = []
+  if check_invalid_ip(ip_address):
+    messages.append(f'IP: {ip_address} is invalid.')
+  if check_invalid_mac(mac_address):
+    messages.append(f'MAC: {mac_address} is invalid.')
+  if check_invalid_test_type(test_type):
+    messages.append(f'Status check: {test_type} is invalid. Enter "icmp" or a valid TCP port number.')
+  if messages:
+    return generate_modal_html(messages, 'Edit Computer Error')
+
+  for computer in computers:
+    if computer['name'] == name:
+      computer['ip_address'] = ip_address
+      computer['test_type'] = test_type
+      break
+
   # Save the updated list of computers to the configuration file
   with open(computer_filename, 'w') as f:
     for computer in computers:
