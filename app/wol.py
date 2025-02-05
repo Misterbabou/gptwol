@@ -76,6 +76,9 @@ def load_computers():
   # Check for warning
   if os.path.exists(computer_old_filename):
     os.environ['OLD_COMPUTER_FILE_WARNING'] = 'true'
+  directory = "db"
+  if not os.path.exists(directory):
+    os.makedirs(directory)
   if not os.path.exists(computer_filename):
     open(computer_filename, 'w').close()  # create the file if it doesn't exist
   with open(computer_filename) as f:
