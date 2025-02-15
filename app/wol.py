@@ -392,7 +392,7 @@ def wol_or_sol_send():
     send_wol_packet(reversed_mac_address)
     title = "Shutdown"
     messages.append(f"Sleep On Lan Magic Packet Sent to {computer['name']}!")
-    messages.append('See : <a href="https://github.com/SR-G/sleep-on-lan" target="_blank" rel="noopener noreferrer">how to configure Sleep on LAN</a>')
+    messages.append('See : <a href="https://github.com/Misterbabou/gptwol#configure-sleep-on-lan" target="_blank" rel="noopener noreferrer">how to configure Sleep on LAN</a>')
   else:
     send_wol_packet(mac_address)
     title = "Wakeup"
