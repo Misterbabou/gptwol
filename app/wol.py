@@ -106,9 +106,17 @@ def load_computers():
         user = fields[5]
         command = ' '.join(fields[6:])
         mac_address = command.split()[-1]
+        reversed_mac_address = ':'.join(reversed(mac_address.split(':')))
+
+        # Find the computer WOL MAC address
         computer = next((c for c in computers if c['mac_address'] == mac_address), None)
         if computer:
-          computer['cron_schedule'] = schedule
+          computer['cron_wol_schedule'] = schedule
+
+        # Find the computer SOL MAC address
+        computer_reversed = next((c for c in computers if c['mac_address'] == reversed_mac_address), None)
+        if computer_reversed:
+          computer_reversed['cron_sol_schedule'] = schedule
 
   return computers
 
@@ -237,15 +245,15 @@ def wol_form():
 
 @app.route('/delete_computer', methods=['POST'])
 def delete_computer():
-  name = request.form['name']
+  mac_address = request.form['mac_address']
 
-  # Get the mac_address of the computer being deleted
-  mac_address = next((computer['mac_address'] for computer in computers if computer['name'] == name), None)
-
-  # Delete the cron schedule for the mac_address
+  # Delete the wol cron schedule for the mac_address
   delete_cron_entry(mac_address)
+  # Delete the sol cron schedule for the reversed_mac_address
+  reversed_mac_address = ':'.join(reversed(mac_address.split(':')))
+  delete_cron_entry(reversed_mac_address)
 
-  computers[:] = [computer for computer in computers if computer['name'] != name]
+  computers[:] = [computer for computer in computers if computer['mac_address'] != mac_address]
   # Save the updated list of computers to the configuration file
   with open(computer_filename, 'w') as f:
     for computer in computers:
@@ -288,18 +296,29 @@ def edit_computer():
   ip_address = request.form['ip_address']
   test_type = request.form['test_type']
 
+  # Find the computer being edited
+  computer_to_edit = next((computer for computer in computers if computer['mac_address'] == mac_address), None)
+
   messages = []
+  if computer_to_edit is None:
+    messages.append(f'Computer with MAC address: {mac_address} not found.')
+  # Check if the name is being changed and if it already exists
+  if computer_to_edit['name'] != name and check_name_exist(name, computers):
+    messages.append(f'Computer name: {name} already exists.')
   if check_invalid_ip(ip_address):
     messages.append(f'IP: {ip_address} is invalid.')
-  if check_invalid_mac(mac_address):
-    messages.append(f'MAC: {mac_address} is invalid.')
   if check_invalid_test_type(test_type):
     messages.append(f'Status check: {test_type} is invalid. Enter "icmp" or a valid TCP port number.')
   if messages:
     return generate_modal_html(messages, 'Edit Computer Error')
 
+  if computer_to_edit['name'] == name and computer_to_edit['ip_address'] == ip_address and computer_to_edit['test_type'] == test_type:
+    messages.append(f'No change was made.')
+    return generate_modal_html(messages, 'Edit Computer Info')
+
   for computer in computers:
-    if computer['name'] == name:
+    if computer['mac_address'] == mac_address:
+      computer['name'] = name
       computer['ip_address'] = ip_address
       computer['test_type'] = test_type
       break
@@ -310,12 +329,7 @@ def edit_computer():
       f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
   return redirect(url_for('wol_form'))
 
-@app.route('/add_cron', methods=['POST'])
-def add_cron():
-  # Add Cron function
-  request_mac_address = request.form['mac_address']
-  request_cron = request.form['cron_request']
-
+def add_cron(mac_address, request_cron):
   messages = []
   # Check Entries
   if check_invalid_cron(request_cron):
@@ -323,16 +337,38 @@ def add_cron():
     messages.append('See : <a href="https://crontab.guru/" target="_blank" rel="noopener noreferrer">Crontab maker</a>')
     return generate_modal_html(messages, 'Add Cron Error')
 
-  cron_command = f"{request_cron} root /usr/local/bin/wakeonlan {request_mac_address}"
+  cron_command = f"{request_cron} root /usr/local/bin/wakeonlan {mac_address}"
   with open(cron_filename, "a") as f:
     f.write(f"{cron_command}\n")
   return redirect(url_for('wol_form'))
 
-@app.route('/delete_cron', methods=['POST'])
-def delete_cron():
+@app.route('/add_wol_cron', methods=['POST'])
+def add_wol_cron():
   request_mac_address = request.form['mac_address']
-  delete_cron_entry(request_mac_address)
+  request_cron = request.form['cron_request']
+  return add_cron(request_mac_address, request_cron)
+
+@app.route('/add_sol_cron', methods=['POST'])
+def add_sol_cron():
+  request_mac_address = request.form['mac_address']
+  reversed_mac_address = ':'.join(reversed(request_mac_address.split(':')))
+  request_cron = request.form['cron_request']
+  return add_cron(reversed_mac_address, request_cron)
+
+def delete_cron(mac_address):
+  delete_cron_entry(mac_address)
   return redirect(url_for('wol_form'))
+
+@app.route('/delete_wol_cron', methods=['POST'])
+def delete_wol_cron():
+  request_mac_address = request.form['mac_address']
+  return delete_cron(request_mac_address)
+
+@app.route('/delete_sol_cron', methods=['POST'])
+def delete_sol_cron():
+  request_mac_address = request.form['mac_address']
+  reversed_mac_address = ':'.join(reversed(request_mac_address.split(':')))
+  return delete_cron(reversed_mac_address)
 
 @app.route('/check_status')
 def check_status():
@@ -343,20 +379,24 @@ def check_status():
   else:
     return 'asleep'
 
-@app.route('/wakeup', methods=['POST'])
-def wol_send():
+@app.route('/wol_or_sol_send', methods=['POST'])
+def wol_or_sol_send():
   mac_address = request.form['mac_address']
   computer = next(c for c in computers if c['mac_address'] == mac_address)
   ip_address = computer['ip_address']
   test_type = computer['test_type']
 
-  title = "Wakeup"
   messages = []
   if is_computer_awake(ip_address, test_type):
-    messages.append('Computer is Already Awake')
+    reversed_mac_address = ':'.join(reversed(mac_address.split(':')))
+    send_wol_packet(reversed_mac_address)
+    title = "Shutdown"
+    messages.append(f"Sleep On Lan Magic Packet Sent to {computer['name']}!")
+    messages.append('See : <a href="https://github.com/SR-G/sleep-on-lan" target="_blank" rel="noopener noreferrer">how to configure Sleep on LAN</a>')
   else:
     send_wol_packet(mac_address)
-    messages.append('Magic Packet Sent !')
+    title = "Wakeup"
+    messages.append(f"Wake On Lan Magic Packet Sent to {computer['name']}!")
 
   return generate_modal_html(messages, title)
 

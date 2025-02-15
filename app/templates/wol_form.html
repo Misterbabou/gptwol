@@ -25,28 +25,13 @@
           // Extract IP address and test type from the data attributes
           const ip_address = indicator.getAttribute('data-ip-address');
           const test_type = indicator.getAttribute('data-test-type');
-          const check_status_url = "{{ url_for('check_status') }}";
-
-           // Make an HTTP GET request to fetch the initial status
-          fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
-            .then(response => response.text())
-            .then(status => {
-              // Update the class of the element based on the returned status
-              if (status === 'awake') {
-                indicator.classList.remove('asleep');
-                indicator.classList.add('awake');
-              } else {
-                indicator.classList.remove('awake');
-                indicator.classList.add('asleep');
-              }
-            })
-            .catch(error => {
-              console.error('Error fetching initial status:', error);
-            });
+          // Find the corresponding button element
+          const buttonElement = indicator.closest('.card').querySelector('.status-power');
+          updateStatus(ip_address, test_type, indicator, buttonElement);
         });
       });
 
-      function updateStatus(ip_address, test_type, element) {
+      function updateStatus(ip_address, test_type, element, buttonElement) {
         const check_status_url = "{{ url_for('check_status') }}";
         // Make an HTTP GET request to the check_status endpoint
         fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
@@ -56,9 +41,15 @@
             if (status === 'awake') {
               element.classList.remove('asleep');
               element.classList.add('awake');
+              buttonElement.classList.remove('btn-success');
+              buttonElement.classList.add('btn-danger');
+              buttonElement.title = 'Sleep';
             } else {
               element.classList.remove('awake');
               element.classList.add('asleep');
+              buttonElement.classList.remove('btn-danger');
+              buttonElement.classList.add('btn-success');
+              buttonElement.title = 'Wake';
             }
           });
       }
@@ -68,8 +59,10 @@
           // Update the status of all computers
           for (let element of document.getElementsByClassName('status-indicator')) {
             const ip_address = element.getAttribute('data-ip-address');
-              const test_type = element.getAttribute('data-test-type');
-            updateStatus(ip_address, test_type, element);
+            const test_type = element.getAttribute('data-test-type');
+            // Find the corresponding button element
+            const buttonElement = element.closest('.card').querySelector('.status-power');
+            updateStatus(ip_address, test_type, element, buttonElement);
           }
         {% if os.environ.get('REFRESH_INTERVAL') == '60' -%}
         }, 60000);
@@ -191,20 +184,20 @@
               <div class="text-end">Check: TCP {{ computer.test_type }}</div>
               {% endif -%}
               <div class="row align-items-center g-0">
-              {% if computer.cron_schedule is defined -%}
-                <div class="col-md-auto w-auto">Cron:  <span class="badge bg-secondary rounded-pill fs-6">{{ computer.cron_schedule }}</span></div>
+              {% if computer.cron_wol_schedule is defined -%}
+                <div class="col-md-auto w-auto">Wake cron:  <span class="badge bg-secondary rounded-pill fs-6">{{ computer.cron_wol_schedule }}</span></div>
                 {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
                 <div class="col-md-auto w-auto">
-                  <button class="delete-button" type="submit" title="Delete Cron" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_cron') }}', 'mac_address', '{{ computer.mac_address }}', 'Cron of {{ computer.name }}')">
+                  <button class="delete-button" type="submit" title="Delete Cron" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_wol_cron') }}', 'mac_address', '{{ computer.mac_address }}', 'Wake cron of {{ computer.name }}')">
                     <i class="fa-regular fa-trash-can"></i>
                   </button>
                 </div>
                 {% endif -%}
               {% else -%}
                 {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
-                <div class="col-md-auto w-auto pe-1">Cron: </div>
+                <div class="col-md-auto w-auto pe-1">Wake cron: </div>
                 <div class="col-md-auto w-auto">
-                  <form method="POST" action="{{ url_for('add_cron') }}">
+                  <form method="POST" action="{{ url_for('add_wol_cron') }}">
                     <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
                     <input class="w-50 border pt-1" type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
                     <button class="add-button" type="submit" title="Add Cron">
@@ -213,15 +206,42 @@
                   </form>
                 </div>
               {% else -%}
-                <div class="col-md-auto">Cron: Not defined</div>
+                <div class="col-md-auto">Wake cron: Not defined</div>
+                {% endif -%}
+              {% endif -%}
+              </div>
+              <div class="row align-items-center g-0">
+              {% if computer.cron_sol_schedule is defined -%}
+                <div class="col-md-auto w-auto">Sleep cron:  <span class="badge bg-secondary rounded-pill fs-6">{{ computer.cron_sol_schedule }}</span></div>
+                {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+                <div class="col-md-auto w-auto">
+                  <button class="delete-button" type="submit" title="Delete Cron" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_sol_cron') }}', 'mac_address', '{{ computer.mac_address }}', 'Sleep cron of {{ computer.name }}')">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                </div>
+                {% endif -%}
+              {% else -%}
+                {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+                <div class="col-md-auto w-auto pe-1">Sleep cron: </div>
+                <div class="col-md-auto w-auto">
+                  <form method="POST" action="{{ url_for('add_sol_cron') }}">
+                    <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+                    <input class="w-50 border pt-1" type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
+                    <button class="add-button" type="submit" title="Add Cron">
+                       <i class="fa-solid fa-plus"></i>
+                    </button>
+                  </form>
+                </div>
+              {% else -%}
+                <div class="col-md-auto">Sleep cron: Not defined</div>
                 {% endif -%}
               {% endif -%}
               </div>
             </div>
             <div class="card-footer text-end">
-              <form method="POST" action="{{ url_for('wol_send') }}" style="display: inline-block;">
+              <form method="POST" action="{{ url_for('wol_or_sol_send') }}" style="display: inline-block;">
                 <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-                <button type="submit" class="btn btn-success" title="Wake UP">
+                <button type="submit" class="btn btn-success status-power">
                   <i class="fa-solid fa-power-off"></i>
                 </button>
               </form>
@@ -229,7 +249,7 @@
               <button type="button" class="btn btn-primary" title="Edit computer" data-bs-toggle="modal" data-bs-target="#editComputer" data-name="{{ computer.name }}" data-mac-address="{{ computer.mac_address }}" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
-              <button type="button" class="btn btn-danger" title="Delete computer" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_computer') }}', 'name', '{{ computer.name }}', 'Computer {{ computer.name }}')">
+              <button type="button" class="btn btn-danger" title="Delete computer" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_computer') }}', 'mac_address', '{{ computer.mac_address }}', 'Computer {{ computer.name }}')">
                 <i class="fa-regular fa-trash-can"></i>
               </button>
               {% endif -%}
@@ -288,7 +308,7 @@
           <div class="modal-body">
               <div class="form-group">
                 <label for="name">Name:</label>
-                <input type="text" class="form-control-plaintext text-primary" name="name" id="edit_name" readonly required>
+                <input type="text" class="form-control" name="name" id="edit_name" required>
               </div>
               <div class="form-group">
                 <label for="mac_address">MAC address:</label>
@@ -340,11 +360,19 @@
           </div>
           <div class="modal-body">
             <div class="text-center">
-              <a data-mdb-ripple-init class="btn btn-link btn-floating btn-sm text-body m-1" href="https://github.com/Misterbabou/gptwol" target="_blank" rel="noopener noreferrer" role="button" data-mdb-ripple-color="dark">
-                <i class="fab fa-github fa-2x"></i>
-              </a>
-              <p><strong>Version:</strong> 4.0.1</p>
+              <p>
+                <a data-mdb-ripple-init class="text-decoration-none" href="https://github.com/Misterbabou/gptwol" target="_blank" rel="noopener noreferrer" role="button" data-mdb-ripple-color="dark">
+                  <i class="fab fa-github fa-2x"></i>
+                  <span>GPTWOL</span>
+                </a>
+              </p>
+              <p><strong>Version:</strong> 4.1.0</p>
               <p><strong>License:</strong> MIT</p>
+            </div>
+            <hr>
+            <div class="text-center">
+              <p><strong>Documentation:</strong></p>
+              <p>- <a class="text-decoration-none" href="https://github.com/Misterbabou/gptwol#configure-sleep-on-lan" target="_blank" rel="noopener noreferrer">Configure Sleep on Lan</a></p>
             </div>
           </div>
           <div class="modal-footer">

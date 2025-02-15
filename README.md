@@ -7,8 +7,7 @@
 [![MIT Licensed](https://img.shields.io/github/license/Misterbabou/gptwol.svg?logo=github&logoColor=959DA5)](https://github.com/Misterbabou/gptwol/blob/main/LICENSE.md)
 ---
 
-GPTWOL is a simple and lightweight Wake on Lan gui made with python to wake up your computers on your LAN.
-It was made mostly by chatGPT.
+GPTWOL is a simple and lightweight Wake/Sleep on Lan gui made with python to wake up and shutdown your computers on your LAN.
 
 ## Screenshot 
 
@@ -23,7 +22,8 @@ It was made mostly by chatGPT.
 ## Features 
 
 - Docker Image to deploy
-- Send Wake On Lan packets
+- Send Wake On Lan packets to wake up computers
+- Send Sleep On Lan packets to shutdown computers
 - Add or Delete Computer
 - Computers status check with ping or tcp request (timeout settings available)
 - Very low power usage (20 mb RAM)
@@ -95,6 +95,28 @@ docker run -d \
   misterbabou/gptwol:latest
 ```
 
+## Configure Sleep on Lan
+
+- Check the [Sleep on Lan Github](https://github.com/SR-G/sleep-on-lan) repo to download and configure
+- GPTWOL send a reverse MAC wakeonlan packet on port 9 to shutdown your computer (you don't need to configure API)
+
+Here is an exemple of a wol.json to shutdown a Debian based computer
+```
+{
+    "Listeners": [
+        "UDP:9"
+    ],
+    "LogLevel": "INFO",
+    "Commands": [
+        {
+            "Operation": "shutdown",
+            "Command": "poweroff",
+            "Default": true
+        }
+    ]
+}
+```
+
 ## Roadmap 
 
 :heavy_check_mark: Add ARM version (Added in 1.0.1)
@@ -115,8 +137,10 @@ docker run -d \
 
 :heavy_check_mark: Add Dark Mode Switch (added in 2.1.3)
 
+:heavy_check_mark: moove computers.txt in an other directory not to mount a file but a directory to the docker container (added in 4.0.0)
+
+:heavy_check_mark: Shutdown computers with Sleep on LAN (added in 4.1.0)
+
 - Add filter buttons to filter computer by Name or IP
 
 - Add OIDC Authentication (will require time)
-
-- moove computers.txt in an other directory not to mount a file but a directory to the docker container
