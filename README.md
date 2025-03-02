@@ -1,4 +1,4 @@
-# GPTWOL a simple Wake On Lan gui
+# GPTWOL a simple Wake/Sleep On Lan gui
 
 ---
 [![Docker Pulls](https://img.shields.io/docker/pulls/misterbabou/gptwol.svg?logo=docker)](https://hub.docker.com/r/misterbabou/gptwol)
