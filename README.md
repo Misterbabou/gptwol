@@ -35,7 +35,7 @@ GPTWOL is a simple and lightweight Wake/Sleep on Lan gui made with python to wak
 
 ## Special configuration you can change
 
-- Ping Refresh to check Status availibility 
+- Ping Refresh to check Status availability 
 - Disable Delete or Add Computers
 - Change the port of the Web UI
 
