@@ -30,7 +30,7 @@ GPTWOL is a simple and lightweight Wake/Sleep on Lan gui made with python to wak
 - Check if IP and MAC provided are valid
 - cron job to wake up device
 - Check if Cron provided is valid
-- Search on cumputer Name, MAC or IP
+- Search on computer Name, MAC or IP
 - Dark mode
 
 ## Special configuration you can change
@@ -42,7 +42,7 @@ GPTWOL is a simple and lightweight Wake/Sleep on Lan gui made with python to wak
 ## Docker Configuration
 > [!NOTE]
 >
->It's recommanded to use docker compose to run this application. [Install documentation](https://docs.docker.com/compose/install/)
+>It's recommended to use docker compose to run this application. [Install documentation](https://docs.docker.com/compose/install/)
 
 > [!CAUTION]
 >
@@ -100,7 +100,7 @@ docker run -d \
 - Check the [Sleep on Lan Github](https://github.com/SR-G/sleep-on-lan) repo to download and configure
 - GPTWOL send a reverse MAC wakeonlan packet on port 9 to shutdown your computer (you don't need to configure API)
 
-Here is an exemple of a wol.json to shutdown a Debian based computer
+Here is an example of a wol.json to shutdown a Debian based computer
 ```
 {
     "Listeners": [
@@ -129,7 +129,7 @@ Here is an exemple of a wol.json to shutdown a Debian based computer
 
 :heavy_check_mark: Improve load page performance due to ping timeout. (added in 1.0.5)
 
-:heavy_check_mark: Add a TCP port option to check availibility without using ICMP (added in 2.0.1)
+:heavy_check_mark: Add a TCP port option to check availability without using ICMP (added in 2.0.1)
 
 :heavy_check_mark: Run app on subpath (added in 2.1.0)
 
@@ -137,7 +137,7 @@ Here is an exemple of a wol.json to shutdown a Debian based computer
 
 :heavy_check_mark: Add Dark Mode Switch (added in 2.1.3)
 
-:heavy_check_mark: moove computers.txt in an other directory not to mount a file but a directory to the docker container (added in 4.0.0)
+:heavy_check_mark: move computers.txt in an other directory not to mount a file but a directory to the docker container (added in 4.0.0)
 
 :heavy_check_mark: Shutdown computers with Sleep on LAN (added in 4.1.0)
 
