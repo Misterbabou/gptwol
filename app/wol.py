@@ -48,6 +48,8 @@ def load_user(user_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+  if DISABLE_LOGIN.strip().lower() == 'true':
+    return redirect(url_for('wol_form'))  # Skip login if DISABLE_LOGIN is set to true
   if request.method == 'POST':
     username = request.form['username']
     password = request.form['password']
