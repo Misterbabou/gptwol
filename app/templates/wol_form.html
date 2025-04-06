@@ -120,7 +120,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarToggler">
           <ul class="navbar-nav me-auto">
-            <a class="navbar-brand d-none d-md-block" href="#">
+            <a class="navbar-brand d-none d-md-block" href="/">
               <img src="{{ url_for('static', filename='images/gptwol.png') }}" width="30" height="30" alt="Logo">
             </a>
           </ul>
@@ -131,6 +131,14 @@
                   <i class="fa-solid fa-circle-plus"></i>
                   <span>Add</span>
                </a>
+            </li>
+            {% endif -%}
+            {% if os.environ.get('DISABLE_LOGIN') != 'true' -%}
+            <li class="nav-item pe-3">
+              <a class="nav-link text-light rounded-pill logout-button px-2" aria-current="page" href="/logout">
+                <i class="fa-solid fa-sign-out"></i>
+                <span>Logout</span>
+              </a>
             </li>
             {% endif -%}
             <li class="nav-item pe-3">
