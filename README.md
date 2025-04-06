@@ -66,6 +66,7 @@ services:
       - TZ=Europe/Paris #Set your timezone for Cron; default is UTC
       #- USERNAME=admin #Uncomment this line to set a username; default is admin
       #- PASSWORD=admin #Uncomment this line to set a password; default is admin
+      #- SECRET_KEY=secret #Uncomment this line to set your own secret key
       #- SCRIPT_NAME=/my-app #Uncomment this line to run the app under a prefix
       #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers; default is to allow
       #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status; default is to allow
