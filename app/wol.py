@@ -29,31 +29,31 @@ users = {username: {'password': password}}  # Replace with your credentials
 
 # User model
 class User(UserMixin):
-    def __init__(self, id):
-        self.id = id
+  def __init__(self, id):
+    self.id = id
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User(user_id) if user_id in users else None
+  return User(user_id) if user_id in users else None
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if username in users and users[username]['password'] == password:
-            user = User(username)
-            login_user(user)
-            return redirect(url_for('wol_form'))
-        return redirect(f"{url_for('login')}?error=Invalid Credentials")
-    return render_template('login_form.html', os=os)
+  if request.method == 'POST':
+    username = request.form['username']
+    password = request.form['password']
+    if username in users and users[username]['password'] == password:
+      user = User(username)
+      login_user(user)
+      return redirect(url_for('wol_form'))
+    return redirect(f"{url_for('login')}?error=Invalid Credentials")
+  return render_template('login_form.html', os=os)
 
 # Logout route
 @app.route('/logout')
 @login_required
 def logout():
-    logout_user()
-    return redirect(url_for('login'))
+  logout_user()
+  return redirect(url_for('login'))
 
 def generate_modal_html(messages, title):
   message_content = '<br>'.join(messages)
