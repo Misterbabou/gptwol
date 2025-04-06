@@ -133,12 +133,14 @@
                </a>
             </li>
             {% endif -%}
+            {% if os.environ.get('DISABLE_LOGIN') != 'true' -%}
             <li class="nav-item pe-3">
               <a class="nav-link text-light rounded-pill logout-button px-2" aria-current="page" href="/logout">
                 <i class="fa-solid fa-sign-out"></i>
                 <span>Logout</span>
               </a>
             </li>
+            {% endif -%}
             <li class="nav-item pe-3">
               <a class="nav-link text-light rounded-pill bg-secondary px-2" aria-current="page" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal" aria-label="About">
                 <i class="fa-solid fa-info-circle"></i>

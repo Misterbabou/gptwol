@@ -16,15 +16,25 @@ computer_old_filename = 'computers.txt'
 
 app = Flask(__name__, static_folder='templates')
 app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key')  # Replace with a secure key
+DISABLE_LOGIN = os.environ.get('DISABLE_LOGIN', 'false')
 
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'  # Redirect to this route if not logged in
 
+def conditional_login_required(func):
+  """
+  Decorator to conditionally require login based on environment variable.
+  If DISABLE_LOGIN is set to 'true', the login requirement is skipped.
+  """
+  if DISABLE_LOGIN.strip().lower() == 'true':
+    return func  # Skip login requirement if DISABLE_LOGIN is set to true
+  return login_required(func)
+
 # In-memory user store (for simplicity)
 username = os.environ.get('USERNAME', 'admin')
-password = os.environ.get('PASSWORD', 'password123')
+password = os.environ.get('PASSWORD', 'admin')
 users = {username: {'password': password}}  # Replace with your credentials
 
 # User model
@@ -50,7 +60,7 @@ def login():
 
 # Logout route
 @app.route('/logout')
-@login_required
+@conditional_login_required
 def logout():
   logout_user()
   return redirect(url_for('login'))
@@ -275,7 +285,7 @@ def delete_cron_entry(request_mac_address):
   return redirect(url_for('wol_form'))
 
 @app.route('/')
-@login_required
+@conditional_login_required
 def wol_form():
   query = request.args.get('query')
   computers = load_computers()
@@ -285,7 +295,7 @@ def wol_form():
   return render_template('wol_form.html', computers=computers, is_computer_awake=initial_computer_status, os=os, query=query)
 
 @app.route('/delete_computer', methods=['POST'])
-@login_required
+@conditional_login_required
 def delete_computer():
   mac_address = request.form['mac_address']
 
@@ -303,7 +313,7 @@ def delete_computer():
   return redirect(url_for('wol_form'))
 
 @app.route('/add_computer', methods=['POST'])
-@login_required
+@conditional_login_required
 def add_computer():
   name = request.form['name']
   mac_address = request.form['mac_address']
@@ -333,7 +343,7 @@ def add_computer():
   return redirect(url_for('wol_form'))
 
 @app.route('/edit_computer', methods=['POST'])
-@login_required
+@conditional_login_required
 def edit_computer():
   name = request.form['name']
   mac_address = request.form['mac_address']
@@ -387,14 +397,14 @@ def add_cron(mac_address, request_cron):
   return redirect(url_for('wol_form'))
 
 @app.route('/add_wol_cron', methods=['POST'])
-@login_required
+@conditional_login_required
 def add_wol_cron():
   request_mac_address = request.form['mac_address']
   request_cron = request.form['cron_request']
   return add_cron(request_mac_address, request_cron)
 
 @app.route('/add_sol_cron', methods=['POST'])
-@login_required
+@conditional_login_required
 def add_sol_cron():
   request_mac_address = request.form['mac_address']
   reversed_mac_address = ':'.join(reversed(request_mac_address.split(':')))
@@ -406,20 +416,20 @@ def delete_cron(mac_address):
   return redirect(url_for('wol_form'))
 
 @app.route('/delete_wol_cron', methods=['POST'])
-@login_required
+@conditional_login_required
 def delete_wol_cron():
   request_mac_address = request.form['mac_address']
   return delete_cron(request_mac_address)
 
 @app.route('/delete_sol_cron', methods=['POST'])
-@login_required
+@conditional_login_required
 def delete_sol_cron():
   request_mac_address = request.form['mac_address']
   reversed_mac_address = ':'.join(reversed(request_mac_address.split(':')))
   return delete_cron(reversed_mac_address)
 
 @app.route('/check_status')
-@login_required
+@conditional_login_required
 def check_status():
   ip_address = request.args.get('ip_address')
   test_type = request.args.get('test_type')
@@ -429,7 +439,7 @@ def check_status():
     return 'asleep'
 
 @app.route('/wol_or_sol_send', methods=['POST'])
-@login_required
+@conditional_login_required
 def wol_or_sol_send():
   mac_address = request.form['mac_address']
   computer = next(c for c in computers if c['mac_address'] == mac_address)
