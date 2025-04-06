@@ -15,7 +15,7 @@ computer_filename = 'db/computers.txt'
 computer_old_filename = 'computers.txt'
 
 app = Flask(__name__, static_folder='templates')
-app.secret_key = 'your_secret_key'  # Replace with a secure key
+app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key')  # Replace with a secure key
 
 # Initialize Flask-Login
 login_manager = LoginManager()
