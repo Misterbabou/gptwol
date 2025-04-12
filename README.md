@@ -32,12 +32,16 @@ GPTWOL is a simple and lightweight Wake/Sleep on Lan gui made with python to wak
 - Check if Cron provided is valid
 - Search on computer Name, MAC or IP
 - Dark mode
+- Authentication (disable by default)
 
 ## Special configuration you can change
 
 - Ping Refresh to check Status availability 
 - Disable Delete or Add Computers
 - Change the port of the Web UI
+- Enable authentication
+![](/assets/authentication.png)
+
 
 ## Docker Configuration
 > [!NOTE]
@@ -143,6 +147,8 @@ Here is an example of a wol.json to shutdown a Debian based computer
 :heavy_check_mark: move computers.txt in an other directory not to mount a file but a directory to the docker container (added in 4.0.0)
 
 :heavy_check_mark: Shutdown computers with Sleep on LAN (added in 4.1.0)
+
+:heavy_check_mark: Add optional authentication (added in 4.2.0)
 
 - Add filter buttons to filter computer by Name or IP
 
