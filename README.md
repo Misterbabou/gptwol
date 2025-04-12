@@ -40,8 +40,8 @@ GPTWOL is a simple and lightweight Wake/Sleep on Lan gui made with python to wak
 - Disable Delete or Add Computers
 - Change the port of the Web UI
 - Enable authentication
-![](/assets/authentication.png)
 
+![](/assets/authentication.png)
 
 ## Docker Configuration
 > [!NOTE]
