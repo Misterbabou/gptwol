@@ -64,16 +64,15 @@ services:
     environment:
       - PORT=8080 #Free Port on Your host; default is 5000
       - TZ=Europe/Paris #Set your timezone for Cron; default is UTC
-      - USERNAME=admin #Uncomment this line to set a username; default is admin
-      - PASSWORD=admin #Uncomment this line to set a password; default is admin
-      #- SECRET_KEY=secret #Uncomment this line to set your own secret key
+      #- ENABLE_LOGIN=true #Uncomment this line to enable basic login; You would be able to access with USERNAME and PASSWORD; default is false
+      #- USERNAME=admin #Uncomment this line to set a username; default is admin
+      #- PASSWORD=admin #Uncomment this line to set a password; default is admin
       #- SCRIPT_NAME=/my-app #Uncomment this line to run the app under a prefix
       #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers; default is to allow
       #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status; default is to allow
       #- REFRESH_INTERVAL=15 # Uncomment this line to change status check for icmp ou tcp, can be 15 or 60 (seconds); default value is 30 seconds
       #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
       #- TCP_TIMEOUT=5 #Uncomment this line to change the time to wait for a tcp check (in s);  default value 1 second
-      #- DISABLE_LOGIN=false #Uncomment this line to disable login; You would be able to access the interface without authentication; default is to allow
     volumes:
       - ./appdata/db:/app/db
       - ./appdata/cron:/etc/cron.d
@@ -94,8 +93,6 @@ docker run -d \
   --restart unless-stopped \
   -e PORT=8080 \
   -e TZ=Europe/Paris \
-  -e USERNAME=admin \
-  -e PASSWORD=admin \
   -v ./appdata/db:/app/db \
   -v ./appdata/cron:/etc/cron.d \
   misterbabou/gptwol:latest
