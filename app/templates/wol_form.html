@@ -120,7 +120,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarToggler">
           <ul class="navbar-nav me-auto">
-            <a class="navbar-brand d-none d-md-block" href="#">
+            <a class="navbar-brand d-none d-md-block" href="/">
               <img src="{{ url_for('static', filename='images/gptwol.png') }}" width="30" height="30" alt="Logo">
             </a>
           </ul>
@@ -139,6 +139,14 @@
                 <span>About</span>
               </a>
             </li>
+            {% if os.environ.get('ENABLE_LOGIN') == 'true' -%}
+            <li class="nav-item pe-3">
+              <a class="nav-link text-light rounded-pill bg-danger px-2" aria-current="page" href="/logout">
+                <i class="fa-solid fa-sign-out"></i>
+                <span>Logout</span>
+              </a>
+            </li>
+            {% endif -%}            
             <li class="nav-item pe-3">
               <div class="align-items-center d-flex px-2 pt-2 btn rounded-pill border border-secondary" id="darkModeBtn">
                 <i class="fa-solid fa-sun"></i>
@@ -366,7 +374,7 @@
                   <span>GPTWOL</span>
                 </a>
               </p>
-              <p><strong>Version:</strong> 4.1.1</p>
+              <p><strong>Version:</strong> 4.2.0</p>
               <p><strong>License:</strong> MIT</p>
             </div>
             <hr>

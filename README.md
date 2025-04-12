@@ -64,6 +64,9 @@ services:
     environment:
       - PORT=8080 #Free Port on Your host; default is 5000
       - TZ=Europe/Paris #Set your timezone for Cron; default is UTC
+      #- ENABLE_LOGIN=true #Uncomment this line to enable basic login; You would be able to access with USERNAME and PASSWORD; default is false
+      #- USERNAME=admin #Uncomment this line to set a username; default is admin
+      #- PASSWORD=admin #Uncomment this line to set a password; default is admin
       #- SCRIPT_NAME=/my-app #Uncomment this line to run the app under a prefix
       #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers; default is to allow
       #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status; default is to allow

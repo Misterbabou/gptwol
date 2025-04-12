@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, redirect, url_for
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import socket
 import struct
 import subprocess
@@ -14,6 +15,57 @@ computer_filename = 'db/computers.txt'
 computer_old_filename = 'computers.txt'
 
 app = Flask(__name__, static_folder='templates')
+app.secret_key = os.urandom(24)
+ENABLE_LOGIN = os.environ.get('ENABLE_LOGIN', 'false')
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'  # Redirect to this route if not logged in
+
+def conditional_login_required(func):
+  """
+  Decorator to conditionally require login based on environment variable.
+  If ENABLE_LOGIN is set to 'false', the login requirement is skipped.
+  """
+  if ENABLE_LOGIN.strip().lower() == 'false':
+    return func  # Skip login requirement if DISABLE_LOGIN is set to true
+  return login_required(func)
+
+# In-memory user store (for simplicity)
+username = os.environ.get('USERNAME', 'admin')
+password = os.environ.get('PASSWORD', 'admin')
+users = {username: {'password': password}}  # Replace with your credentials
+
+# User model
+class User(UserMixin):
+  def __init__(self, id):
+    self.id = id
+
+@login_manager.user_loader
+def load_user(user_id):
+  return User(user_id) if user_id in users else None
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+  if ENABLE_LOGIN.strip().lower() == 'false':
+    return redirect(url_for('wol_form'))  # Skip login
+  if request.method == 'POST':
+    username = request.form['username']
+    password = request.form['password']
+    if username in users and users[username]['password'] == password:
+      user = User(username)
+      login_user(user)
+      return redirect(url_for('wol_form'))
+    return redirect(f"{url_for('login')}?error=Invalid Credentials")
+  return render_template('login_form.html', os=os)
+
+# Logout route
+@app.route('/logout')
+@conditional_login_required
+def logout():
+  logout_user()
+  return redirect(url_for('login'))
 
 def generate_modal_html(messages, title):
   message_content = '<br>'.join(messages)
@@ -235,6 +287,7 @@ def delete_cron_entry(request_mac_address):
   return redirect(url_for('wol_form'))
 
 @app.route('/')
+@conditional_login_required
 def wol_form():
   query = request.args.get('query')
   computers = load_computers()
@@ -244,6 +297,7 @@ def wol_form():
   return render_template('wol_form.html', computers=computers, is_computer_awake=initial_computer_status, os=os, query=query)
 
 @app.route('/delete_computer', methods=['POST'])
+@conditional_login_required
 def delete_computer():
   mac_address = request.form['mac_address']
 
@@ -261,6 +315,7 @@ def delete_computer():
   return redirect(url_for('wol_form'))
 
 @app.route('/add_computer', methods=['POST'])
+@conditional_login_required
 def add_computer():
   name = request.form['name']
   mac_address = request.form['mac_address']
@@ -290,6 +345,7 @@ def add_computer():
   return redirect(url_for('wol_form'))
 
 @app.route('/edit_computer', methods=['POST'])
+@conditional_login_required
 def edit_computer():
   name = request.form['name']
   mac_address = request.form['mac_address']
@@ -343,12 +399,14 @@ def add_cron(mac_address, request_cron):
   return redirect(url_for('wol_form'))
 
 @app.route('/add_wol_cron', methods=['POST'])
+@conditional_login_required
 def add_wol_cron():
   request_mac_address = request.form['mac_address']
   request_cron = request.form['cron_request']
   return add_cron(request_mac_address, request_cron)
 
 @app.route('/add_sol_cron', methods=['POST'])
+@conditional_login_required
 def add_sol_cron():
   request_mac_address = request.form['mac_address']
   reversed_mac_address = ':'.join(reversed(request_mac_address.split(':')))
@@ -360,17 +418,20 @@ def delete_cron(mac_address):
   return redirect(url_for('wol_form'))
 
 @app.route('/delete_wol_cron', methods=['POST'])
+@conditional_login_required
 def delete_wol_cron():
   request_mac_address = request.form['mac_address']
   return delete_cron(request_mac_address)
 
 @app.route('/delete_sol_cron', methods=['POST'])
+@conditional_login_required
 def delete_sol_cron():
   request_mac_address = request.form['mac_address']
   reversed_mac_address = ':'.join(reversed(request_mac_address.split(':')))
   return delete_cron(reversed_mac_address)
 
 @app.route('/check_status')
+@conditional_login_required
 def check_status():
   ip_address = request.args.get('ip_address')
   test_type = request.args.get('test_type')
@@ -380,6 +441,7 @@ def check_status():
     return 'asleep'
 
 @app.route('/wol_or_sol_send', methods=['POST'])
+@conditional_login_required
 def wol_or_sol_send():
   mac_address = request.form['mac_address']
   computer = next(c for c in computers if c['mac_address'] == mac_address)
