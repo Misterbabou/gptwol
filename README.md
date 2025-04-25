@@ -26,7 +26,7 @@ GPTWOL is a simple and lightweight Wake/Sleep on Lan gui made with python to wak
 - Send Sleep On Lan packets to shutdown computers
 - Add or Delete Computer
 - Computers status check with ping, arp or tcp request (timeout settings available)
-- ARP Scan to add you computers
+- ARP-SCAN to add computers
 - Very low power usage (20 mb RAM)
 - Check if IP and MAC provided are valid
 - cron job to wake up device
@@ -152,7 +152,7 @@ Here is an example of a wol.json to shutdown a Debian based computer
 
 :heavy_check_mark: Add optional authentication (added in 4.2.0)
 
-:heavy_check_mark: Add ARP SCAN to add you computer of for availibility check (added in 5.0.0)
+:heavy_check_mark: Add ARP SCAN to add you computer of for availability check (added in 5.0.0)
 
 - Add filter buttons to filter computer by Name or IP
 
