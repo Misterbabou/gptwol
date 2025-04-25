@@ -25,7 +25,8 @@ GPTWOL is a simple and lightweight Wake/Sleep on Lan gui made with python to wak
 - Send Wake On Lan packets to wake up computers
 - Send Sleep On Lan packets to shutdown computers
 - Add or Delete Computer
-- Computers status check with ping or tcp request (timeout settings available)
+- Computers status check with ping, arp or tcp request (timeout settings available)
+- ARP Scan to add you computers
 - Very low power usage (20 mb RAM)
 - Check if IP and MAC provided are valid
 - cron job to wake up device
@@ -75,8 +76,9 @@ services:
       #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers; default is to allow
       #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status; default is to allow
       #- REFRESH_INTERVAL=15 # Uncomment this line to change status check for icmp ou tcp, can be 15 or 60 (seconds); default value is 30 seconds
-      #- PING_TIMEOUT=200 #Uncomment this line to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
-      #- TCP_TIMEOUT=5 #Uncomment this line to change the time to wait for a tcp check (in s);  default value 1 second
+      #- PING_TIMEOUT=300 #Uncomment this line to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
+      #- ARP_TIMEOUT=300 #Uncomment this line to change the time to wait for a arp answer in (in ms); default value is 300 milliseconds
+      #- TCP_TIMEOUT=1 #Uncomment this line to change the time to wait for a tcp check (in s);  default value 1 second
     volumes:
       - ./appdata/db:/app/db
       - ./appdata/cron:/etc/cron.d
@@ -149,6 +151,8 @@ Here is an example of a wol.json to shutdown a Debian based computer
 :heavy_check_mark: Shutdown computers with Sleep on LAN (added in 4.1.0)
 
 :heavy_check_mark: Add optional authentication (added in 4.2.0)
+
+:heavy_check_mark: Add ARP SCAN to add you computer of for availibility check (added in 5.0.0)
 
 - Add filter buttons to filter computer by Name or IP
 

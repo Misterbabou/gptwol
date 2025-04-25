@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import socket
 import struct
@@ -9,6 +9,7 @@ import re
 
 port = os.environ.get('PORT', 5000)
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
+arp_timeout = os.environ.get('ARP_TIMEOUT', 300)
 tcp_timeout = os.environ.get('TCP_TIMEOUT', 1)
 cron_filename = '/etc/cron.d/gptwol'
 computer_filename = 'db/computers.txt'
@@ -186,6 +187,8 @@ def send_wol_packet(mac_address):
 def is_computer_awake(ip_address, port, timeout=ping_timeout):
   if not port or port.lower() == 'icmp':
     return is_computer_awake_icmp(ip_address)
+  if port.lower() == 'arp':
+    return is_computer_awake_arp(ip_address)
   else:
     port_int = int(port)
     return is_computer_awake_tcp(ip_address, port_int)
@@ -194,6 +197,12 @@ def is_computer_awake_icmp(ip_address, timeout=ping_timeout):
   # Use the fping command with a timeout to check if the computer is awake
   result = subprocess.run(['fping', '-t', str(timeout), '-c', '1', ip_address], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
   return result.returncode == 0
+
+def is_computer_awake_arp(ip_address, timeout=arp_timeout):
+  # Use the arp-scan command to check if the computer is awake
+  result = subprocess.run(['arp-scan', '-qx', '-t', str(timeout), ip_address], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+  # Check if there is any output in stdout
+  return bool(result.stdout.strip())
 
 def is_computer_awake_tcp(ip_address, port, timeout=tcp_timeout):
   # Use nc (netcat) to check if the TCP port is open
@@ -237,7 +246,7 @@ def check_invalid_mac(mac):
 
 def check_invalid_test_type(test_type):
   # Check if test_type is "icmp" or a valid port number
-  if test_type == "icmp":
+  if test_type == "icmp" or test_type == "arp":
     return False  # "icmp" is valid
   return not (test_type.isdigit() and 0 <= int(test_type) <= 65535)
 
@@ -461,6 +470,33 @@ def wol_or_sol_send():
     messages.append(f"Wake On Lan Magic Packet Sent to {computer['name']}!")
 
   return generate_modal_html(messages, title)
+
+@app.route('/arp_scan', methods=['GET'])
+@conditional_login_required
+def arp_scan():
+  try:
+    # Load the list of active computers
+    computers = load_computers()
+    active_mac_addresses = {computer['mac_address'] for computer in computers}
+    result = subprocess.check_output(['arp-scan', '-lqx', '-t', str(arp_timeout)], universal_newlines=True)
+    lines = result.strip().split('\n')
+
+    devices = []
+    for line in lines:
+      parts = line.split()
+      if len(parts) >= 2:
+        ip_address = parts[0]
+        mac_address = parts[1]
+        # Exclude MAC addresses that are already in the active computers list
+        if mac_address not in active_mac_addresses:
+          devices.append({'ip': ip_address, 'mac': mac_address})
+
+    if not devices:
+      return jsonify({'message': 'No new devices found.'})
+    return jsonify(devices)
+
+  except Exception as e:
+    return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)

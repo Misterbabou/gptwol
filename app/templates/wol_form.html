@@ -10,10 +10,13 @@
     <link rel="icon" href="{{ url_for('static', filename='images/gptwol.png') }}" type="image/png"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
     <script>
+      const arp_scan_url = "{{ url_for('arp_scan') }}";
+      const check_status_url = "{{ url_for('check_status') }}";
+
       // ---
       // Status Indicator
       window.addEventListener('load', function() {
@@ -32,7 +35,6 @@
       });
 
       function updateStatus(ip_address, test_type, element, buttonElement) {
-        const check_status_url = "{{ url_for('check_status') }}";
         // Make an HTTP GET request to the check_status endpoint
         fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
           .then(response => response.text())
@@ -72,11 +74,6 @@
         }, 30000);
         {% endif -%}
       {% endif -%}
-
-      function resizeInput() {
-        var input = document.getElementById("cron_request");
-        input.style.width = (input.value.length + 1) * 8 + "px";
-      }
 
       function clearSearchInput() {
         document.querySelector('.search-input').value = '';
@@ -188,6 +185,8 @@
               <div class="text-end">MAC: {{ computer.mac_address }}</div>
               {% if computer.test_type == 'icmp' -%}
               <div class="text-end">Check: ICMP</div>
+              {% elif computer.test_type == 'arp' -%}
+              <div class="text-end">Check: ARP</div>
               {% else -%}
               <div class="text-end">Check: TCP {{ computer.test_type }}</div>
               {% endif -%}
@@ -293,10 +292,11 @@
             </div>
             <div class="form-group">
               <label for="test_type">Status Check:</label>
-              <input type="text" class="form-control" name="test_type" id="test_type" placeholder="icmp or port number" required>
+              <input type="text" class="form-control" name="test_type" id="test_type" placeholder="icmp, arp or port number" required>
             </div>
           </div>
           <div class="modal-footer">
+                <button class="btn btn-primary" id="arpScanButton" data-bs-target="#arpScan" data-bs-toggle="modal" data-bs-dismiss="modal">Scan Network</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="submit" class="btn btn-success" id="confirmAdd">Add</button>
           </div>
@@ -340,23 +340,41 @@
       </div>
     </div>
 
-     <div class="modal fade" id="staticDelete" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticDeleteLabel" aria-hidden="true">
-       <div class="modal-dialog">
-         <div class="modal-content">
-           <div class="modal-header">
-             <h5 class="modal-title" id="staticDeleteLabel">Confirm Deletion</h5>
-             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-           </div>
-           <div class="modal-body">
-             Are you sure you want to delete the <strong id="deleteMessage"></strong> ?
-           </div>
-           <div class="modal-footer">
-             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-             <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
-           </div>
-         </div>
-       </div>
-     </div>
+    <div class="modal fade" id="staticDelete" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticDeleteLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="staticDeleteLabel">Confirm Deletion</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete the <strong id="deleteMessage"></strong> ?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="arpScan" tabindex="-1" aria-labelledby="arpScanLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="arpScanLabel">Select a Device</h5>
+            <button type="button" class="btn-close" data-bs-target="#addComputer" data-bs-toggle="modal" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="loadingMessage">Scanning in progress...</div>
+            <ul id="arpScanResults" class="list-group" style="display: none;"></ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-success" data-bs-target="#addComputer" data-bs-toggle="modal" data-bs-dismiss="modal">Validate</button>
+          </div>
+        </div>
+      </div>
+    </div>
     {% endif -%}
 
     <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
@@ -374,7 +392,7 @@
                   <span>GPTWOL</span>
                 </a>
               </p>
-              <p><strong>Version:</strong> 4.2.0</p>
+              <p><strong>Version:</strong> 5.0.0</p>
               <p><strong>License:</strong> MIT</p>
             </div>
             <hr>
@@ -421,5 +439,6 @@
     {% endif -%}
     </script>
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/arpscan.js') }}"></script>
   </body>
 </html>
