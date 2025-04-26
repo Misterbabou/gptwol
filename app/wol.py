@@ -342,7 +342,7 @@ def add_computer():
   if check_invalid_mac(mac_address):
     messages.append(f'MAC: {mac_address} is invalid.')
   if check_invalid_test_type(test_type):
-    messages.append(f'Status check: {test_type} is invalid. Enter "icmp" or a valid TCP port number.')
+    messages.append(f'Status check: {test_type} is invalid. Enter "icmp", "arp" or a valid TCP port number.')
   if messages:
     return generate_modal_html(messages, 'Add Computer Error')
 
@@ -373,7 +373,7 @@ def edit_computer():
   if check_invalid_ip(ip_address):
     messages.append(f'IP: {ip_address} is invalid.')
   if check_invalid_test_type(test_type):
-    messages.append(f'Status check: {test_type} is invalid. Enter "icmp" or a valid TCP port number.')
+    messages.append(f'Status check: {test_type} is invalid. Enter "icmp", "arp" or a valid TCP port number.')
   if messages:
     return generate_modal_html(messages, 'Edit Computer Error')
 
