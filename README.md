@@ -73,7 +73,7 @@ services:
     environment:
       - PORT=5000 #Free Port on Your host; default is 5000
       - TZ=Europe/Paris #Set your timezone for Cron; default is UTC
-      #- ENABLE_LOGIN=false # Enable or diable login; You would be able to access with USERNAME and PASSWORD; default is false
+      #- ENABLE_LOGIN=false # Enable or disable login; You would be able to access with USERNAME and PASSWORD; default is false
       #- USERNAME=admin # Set a username; default is admin
       #- PASSWORD=admin # Set a password; default is admin
       #- SCRIPT_NAME=/my-app # Uncomment this line to run the app under a prefix; default is /
@@ -163,7 +163,7 @@ Here is an example of a wol.json to shutdown a Debian based computer
 ## Questions
 
 <details>
-<summary>Will OIDC will be implemented?</summary>
+<summary>Will OIDC be implemented?</summary>
 <br>
 
 **OIDC Authentication** will not be implemented but you can add it for instance by using:
@@ -175,7 +175,7 @@ Here is an example of a wol.json to shutdown a Debian based computer
 <summary>Is there a GUI to configure automatic wakeup and shutdown?</summary>
 <br>
 
-Automatic shutdwon and wakeup are made in the GUI using cron syntax. As I want to keep the application simple, I will not implement a GUI with a calendar, month an days.
+Automatic shutdown and wakeup are made in the GUI using cron syntax. As I want to keep the application simple, I will not implement a GUI with a calendar, month an days.
 You can check this [link](https://crontab.guru/) to help you build your cron.
 
 </details>
