@@ -1,4 +1,8 @@
-# GPTWOL a simple Wake/Sleep On Lan gui
+<div align="center" width="100%">
+    <img src="app/templates/images/gptwol.png" width="150" />
+</div>
+
+# GPTWOL a simple Wake/Sleep On Lan docker GUI
 
 ---
 [![Docker Pulls](https://img.shields.io/docker/pulls/misterbabou/gptwol.svg?logo=docker)](https://hub.docker.com/r/misterbabou/gptwol)
@@ -67,18 +71,18 @@ services:
     network_mode: host
     restart: unless-stopped
     environment:
-      - PORT=8080 #Free Port on Your host; default is 5000
+      - PORT=5000 #Free Port on Your host; default is 5000
       - TZ=Europe/Paris #Set your timezone for Cron; default is UTC
-      #- ENABLE_LOGIN=true #Uncomment this line to enable basic login; You would be able to access with USERNAME and PASSWORD; default is false
-      #- USERNAME=admin #Uncomment this line to set a username; default is admin
-      #- PASSWORD=admin #Uncomment this line to set a password; default is admin
-      #- SCRIPT_NAME=/my-app #Uncomment this line to run the app under a prefix
-      #- DISABLE_ADD_DEL=1 #Uncomment this line to disable Add or delete Computers; default is to allow
-      #- DISABLE_REFRESH=1 #Uncomment this line to prevent your browser to refresh Computer status; default is to allow
-      #- REFRESH_INTERVAL=15 # Uncomment this line to change status check for icmp ou tcp, can be 15 or 60 (seconds); default value is 30 seconds
-      #- PING_TIMEOUT=300 #Uncomment this line to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
-      #- ARP_TIMEOUT=300 #Uncomment this line to change the time to wait for a arp answer in (in ms); default value is 300 milliseconds
-      #- TCP_TIMEOUT=1 #Uncomment this line to change the time to wait for a tcp check (in s);  default value 1 second
+      #- ENABLE_LOGIN=false # Enable or diable login; You would be able to access with USERNAME and PASSWORD; default is false
+      #- USERNAME=admin # Set a username; default is admin
+      #- PASSWORD=admin # Set a password; default is admin
+      #- SCRIPT_NAME=/my-app # Uncomment this line to run the app under a prefix; default is /
+      #- ENABLE_ADD_DEL=true # Enable or disable ADD computer and Delete computer buttons; default is true
+      #- ENABLE_REFRESH=true # Enable or disable automatic status refresh; default is true
+      #- REFRESH_INTERVAL=30 # Uncomment to change status check for icmp, arp or tcp, can be 15, 30 or 60 (seconds); default value is 30 seconds
+      #- PING_TIMEOUT=300 #Uncomment to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
+      #- ARP_TIMEOUT=300 #Uncomment to change the time to wait for a arp answer in (in ms); default value is 300 milliseconds
+      #- TCP_TIMEOUT=1 #Uncomment to change the time to wait for a tcp check (in s);  default value 1 second
     volumes:
       - ./appdata/db:/app/db
       - ./appdata/cron:/etc/cron.d

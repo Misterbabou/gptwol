@@ -17,7 +17,7 @@ computer_old_filename = 'computers.txt'
 
 app = Flask(__name__, static_folder='templates')
 app.secret_key = os.urandom(24)
-ENABLE_LOGIN = os.environ.get('ENABLE_LOGIN', 'false')
+enable_login = os.environ.get('ENABLE_LOGIN', 'false')
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -27,10 +27,10 @@ login_manager.login_view = 'login'  # Redirect to this route if not logged in
 def conditional_login_required(func):
   """
   Decorator to conditionally require login based on environment variable.
-  If ENABLE_LOGIN is set to 'false', the login requirement is skipped.
+  If enable_login is set to 'false', the login requirement is skipped.
   """
-  if ENABLE_LOGIN.strip().lower() == 'false':
-    return func  # Skip login requirement if DISABLE_LOGIN is set to true
+  if enable_login.strip().lower() == 'false':
+    return func  # Skip login requirement if enable_login is set to false
   return login_required(func)
 
 # In-memory user store (for simplicity)
@@ -49,7 +49,7 @@ def load_user(user_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-  if ENABLE_LOGIN.strip().lower() == 'false':
+  if enable_login.strip().lower() == 'false':
     return redirect(url_for('wol_form'))  # Skip login
   if request.method == 'POST':
     username = request.form['username']

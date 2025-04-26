@@ -56,7 +56,7 @@
           });
       }
 
-      {% if os.environ.get('DISABLE_REFRESH') != '1' -%}
+      {% if os.environ.get('ENABLE_REFRESH') != 'false' -%}
         setInterval(() => {
           // Update the status of all computers
           for (let element of document.getElementsByClassName('status-indicator')) {
@@ -80,7 +80,7 @@
         window.location.href = "{{ url_for('wol_form') }}";
       }
 
-      {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+      {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
       // Function to populate the edit modal with the selected computer's data
       document.addEventListener('DOMContentLoaded', function () {
         var editComputerModal = document.getElementById('editComputer');
@@ -111,18 +111,18 @@
 
   <body>
     <nav class="navbar navbar-expand-md sticky-top" style="background-color: rgba(0, 0, 0, 0.05);">
-      <div class="container">
+      <div class="container-lg">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggler" aria-controls="navbarToggler" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarToggler">
           <ul class="navbar-nav me-auto">
             <a class="navbar-brand d-none d-md-block" href="/">
-              <img src="{{ url_for('static', filename='images/gptwol.png') }}" width="30" height="30" alt="Logo">
+              <img src="{{ url_for('static', filename='images/gptwol.png') }}" width="40" height="40" alt="Logo">
             </a>
           </ul>
           <ul class="navbar-nav">
-            {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+            {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
             <li class="nav-item pe-3">
               <a class="nav-link text-light rounded-pill bg-success px-2" aria-current="page" href="#" data-bs-toggle="modal" data-bs-target="#addComputer" aria-label="AddComputer">
                   <i class="fa-solid fa-circle-plus"></i>
@@ -193,7 +193,7 @@
               <div class="row align-items-center g-0">
               {% if computer.cron_wol_schedule is defined -%}
                 <div class="col-md-auto w-auto">Wake cron:  <span class="badge bg-secondary rounded-pill fs-6">{{ computer.cron_wol_schedule }}</span></div>
-                {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+                {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
                 <div class="col-md-auto w-auto">
                   <button class="delete-button" type="submit" title="Delete Cron" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_wol_cron') }}', 'mac_address', '{{ computer.mac_address }}', 'Wake cron of {{ computer.name }}')">
                     <i class="fa-regular fa-trash-can"></i>
@@ -201,7 +201,7 @@
                 </div>
                 {% endif -%}
               {% else -%}
-                {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+                {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
                 <div class="col-md-auto w-auto pe-1">Wake cron: </div>
                 <div class="col-md-auto w-auto">
                   <form method="POST" action="{{ url_for('add_wol_cron') }}">
@@ -220,7 +220,7 @@
               <div class="row align-items-center g-0">
               {% if computer.cron_sol_schedule is defined -%}
                 <div class="col-md-auto w-auto">Sleep cron:  <span class="badge bg-secondary rounded-pill fs-6">{{ computer.cron_sol_schedule }}</span></div>
-                {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+                {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
                 <div class="col-md-auto w-auto">
                   <button class="delete-button" type="submit" title="Delete Cron" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_sol_cron') }}', 'mac_address', '{{ computer.mac_address }}', 'Sleep cron of {{ computer.name }}')">
                     <i class="fa-regular fa-trash-can"></i>
@@ -228,7 +228,7 @@
                 </div>
                 {% endif -%}
               {% else -%}
-                {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+                {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
                 <div class="col-md-auto w-auto pe-1">Sleep cron: </div>
                 <div class="col-md-auto w-auto">
                   <form method="POST" action="{{ url_for('add_sol_cron') }}">
@@ -252,7 +252,7 @@
                   <i class="fa-solid fa-power-off"></i>
                 </button>
               </form>
-              {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+              {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
               <button type="button" class="btn btn-primary" title="Edit computer" data-bs-toggle="modal" data-bs-target="#editComputer" data-name="{{ computer.name }}" data-mac-address="{{ computer.mac_address }}" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
@@ -268,7 +268,7 @@
     </div>
 
      <!-- Modal -->
-    {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+    {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
     <div class="modal fade" id="addComputer" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addComputerLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -392,7 +392,7 @@
                   <span>GPTWOL</span>
                 </a>
               </p>
-              <p><strong>Version:</strong> 5.0.1</p>
+              <p><strong>Version:</strong> 5.1.0</p>
               <p><strong>License:</strong> MIT</p>
             </div>
             <hr>
@@ -409,7 +409,7 @@
     </div>
 
     <script>
-    {% if os.environ.get('DISABLE_ADD_DEL') != '1' -%}
+    {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
       // ---
       // Delete Computer
       let deleteForm;
