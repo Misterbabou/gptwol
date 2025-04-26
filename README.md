@@ -160,6 +160,7 @@ Here is an example of a wol.json to shutdown a Debian based computer
 
 <details>
 <summary>Will OIDC will be implemented?</summary>
+<br>
 
 **OIDC Authentication** will not be implemented but you can add it for instance by using:
 - an oidc proxy [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy)
@@ -168,6 +169,7 @@ Here is an example of a wol.json to shutdown a Debian based computer
 </details>
 <details>
 <summary>Is there a GUI to configure automatic wakeup and shutdown?</summary>
+<br>
 
 Automatic shutdwon and wakeup are made in the GUI using cron syntax. As I want to keep the application simple, I will not implement a GUI with a calendar, month an days.
 You can check this [link](https://crontab.guru/) to help you build your cron.
