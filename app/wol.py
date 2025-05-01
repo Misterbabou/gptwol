@@ -80,7 +80,7 @@ def generate_modal_html(messages, title):
       <title>GPTWOL</title>
       <link rel="shortcut icon" href="/">
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
       <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
       <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
@@ -209,10 +209,6 @@ def is_computer_awake_tcp(ip_address, port, timeout=tcp_timeout):
   result = subprocess.run(['nc', '-z', '-w', str(timeout), ip_address, str(port)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
   return result.returncode == 0
 
-def search_computers(computers, query):
-  query = query.lower()
-  return [computer for computer in computers if query in computer['name'].lower() or query in computer['mac_address'].lower() or query in computer['ip_address'].lower()]
-
 def initial_computer_status(ip_address, test_type):
   return "asleep"
 
@@ -298,12 +294,8 @@ def delete_cron_entry(request_mac_address):
 @app.route('/')
 @conditional_login_required
 def wol_form():
-  query = request.args.get('query')
   computers = load_computers()
-
-  if query:
-    computers = search_computers(computers, query)
-  return render_template('wol_form.html', computers=computers, is_computer_awake=initial_computer_status, os=os, query=query)
+  return render_template('wol_form.html', computers=computers, is_computer_awake=initial_computer_status, os=os)
 
 @app.route('/delete_computer', methods=['POST'])
 @conditional_login_required

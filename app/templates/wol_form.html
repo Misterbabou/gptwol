@@ -13,48 +13,10 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/updatestatus.js') }}"></script>
     <script>
       const arp_scan_url = "{{ url_for('arp_scan') }}";
       const check_status_url = "{{ url_for('check_status') }}";
-
-      // ---
-      // Status Indicator
-      window.addEventListener('load', function() {
-        // Get all status indicator elements
-        const statusIndicators = document.querySelectorAll('.status-indicator');
-
-        // Loop through each status indicator element
-        statusIndicators.forEach(function(indicator) {
-          // Extract IP address and test type from the data attributes
-          const ip_address = indicator.getAttribute('data-ip-address');
-          const test_type = indicator.getAttribute('data-test-type');
-          // Find the corresponding button element
-          const buttonElement = indicator.closest('.card').querySelector('.status-power');
-          updateStatus(ip_address, test_type, indicator, buttonElement);
-        });
-      });
-
-      function updateStatus(ip_address, test_type, element, buttonElement) {
-        // Make an HTTP GET request to the check_status endpoint
-        fetch(`${check_status_url}?ip_address=${ip_address}&test_type=${test_type}`)
-          .then(response => response.text())
-          .then(status => {
-            // Update the class of the element based on the returned status
-            if (status === 'awake') {
-              element.classList.remove('asleep');
-              element.classList.add('awake');
-              buttonElement.classList.remove('btn-success');
-              buttonElement.classList.add('btn-danger');
-              buttonElement.title = 'Sleep';
-            } else {
-              element.classList.remove('awake');
-              element.classList.add('asleep');
-              buttonElement.classList.remove('btn-danger');
-              buttonElement.classList.add('btn-success');
-              buttonElement.title = 'Wake';
-            }
-          });
-      }
 
       {% if os.environ.get('ENABLE_REFRESH') != 'false' -%}
         setInterval(() => {
@@ -73,38 +35,6 @@
         {% else -%}
         }, 30000);
         {% endif -%}
-      {% endif -%}
-
-      function clearSearchInput() {
-        document.querySelector('.search-input').value = '';
-        window.location.href = "{{ url_for('wol_form') }}";
-      }
-
-      {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
-      // Function to populate the edit modal with the selected computer's data
-      document.addEventListener('DOMContentLoaded', function () {
-        var editComputerModal = document.getElementById('editComputer');
-        editComputerModal.addEventListener('show.bs.modal', function (event) {
-          var button = event.relatedTarget; // Button that triggered the modal
-
-          // Extract data attributes from the button
-          var name = button.getAttribute('data-name');
-          var macAddress = button.getAttribute('data-mac-address');
-          var ipAddress = button.getAttribute('data-ip-address');
-          var testType = button.getAttribute('data-test-type');
-
-          // Update the modal's content
-          var modalNameInput = editComputerModal.querySelector('#edit_name');
-          var modalMacAddressInput = editComputerModal.querySelector('#edit_mac_address');
-          var modalIpAddressInput = editComputerModal.querySelector('#edit_ip_address');
-          var modalTestTypeInput = editComputerModal.querySelector('#edit_test_type');
-
-          modalNameInput.value = name;
-          modalMacAddressInput.value = macAddress;
-          modalIpAddressInput.value = ipAddress;
-          modalTestTypeInput.value = testType;
-        });
-      });
       {% endif -%}
     </script>
   </head>
@@ -155,15 +85,24 @@
             </li>
           </ul>
         </div>
-        <form method="GET" action="{{ url_for('wol_form') }}" class="search-form form-inline d-flex border border-secondary rounded-1">
-          <input type="text" name="query" placeholder="Search Name, MAC or IP" class="search-input" value="{{ query or '' }}">
-          <button type="submit" class="btn text-secondary" title="Search">
-            <i class="fa-solid fa-magnifying-glass"></i>
-          </button>
-          <button type="button" class="btn text-secondary" onclick="clearSearchInput()" title="Clear">
-            <i class="fa-solid fa-x"></i>
-          </button>
-        </form>
+        <div class="search-container">
+          <div class="btn-group">
+            <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa-solid fa-arrow-up-short-wide"></i>
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <li><a class="dropdown-item" href="#" onclick="sortComputers('name')">Sort by Name</a></li>
+              <li><a class="dropdown-item" href="#" onclick="sortComputers('ip')">Sort by IP</a></li>
+              <li><a class="dropdown-item" href="#" onclick="sortComputers('mac')">Sort by MAC</a></li>
+            </ul>
+          </div>
+          <div class="btn-group">
+            <input type="text" placeholder="Search Name, MAC or IP" class="search-input border border-secondary" value="">
+            <button type="button" class="btn btn-secondary" onclick="clearSearchInput()" title="Clear">
+              <i class="fa-solid fa-x"></i>
+           </button>
+         </div>
+        </div>
       </div>
     </nav>
 
@@ -177,7 +116,7 @@
     <div class="container-fluid">
       <div class="row justify-content-center">
         {% for computer in computers %}
-        <div class="col-lg-4 col-md-6">
+        <div class="col-lg-4 col-md-6 computer-card">
           <div class="card mt-2">
             <div class="card-body">
               <h5 class="card-title">{{ computer.name }} <span class="status-indicator asleep" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}"></span></h5>
@@ -392,7 +331,7 @@
                   <span>GPTWOL</span>
                 </a>
               </p>
-              <p><strong>Version:</strong> 5.1.0</p>
+              <p><strong>Version:</strong> 5.2.0</p>
               <p><strong>License:</strong> MIT</p>
             </div>
             <hr>
@@ -408,37 +347,12 @@
       </div>
     </div>
 
-    <script>
     {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
-      // ---
-      // Delete Computer
-      let deleteForm;
-
-      function setDeleteForm(action, name, value, message) {
-        // Store the form element in a variable
-        deleteForm = document.createElement('form');
-        deleteForm.method = 'POST';
-        deleteForm.action = action;
-
-        // Create a hidden input
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value;
-
-        // Append the input to the form
-        deleteForm.appendChild(input);
-
-        document.getElementById('deleteMessage').textContent = message;
-      }
-
-      document.getElementById('confirmDelete').addEventListener('click', function() {
-        document.body.appendChild(deleteForm);
-        deleteForm.submit();
-      });
+    <script src="{{ url_for('static', filename='js/editcomputer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/delcomputer.js') }}"></script>
     {% endif -%}
-    </script>
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
     <script src="{{ url_for('static', filename='js/arpscan.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/searchbar.js') }}"></script>
   </body>
 </html>

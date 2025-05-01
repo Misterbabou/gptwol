@@ -101,7 +101,7 @@ docker run -d \
   --name=gptwol \
   --network="host" \
   --restart unless-stopped \
-  -e PORT=8080 \
+  -e PORT=5000 \
   -e TZ=Europe/Paris \
   -v ./appdata/db:/app/db \
   -v ./appdata/cron:/etc/cron.d \
@@ -158,7 +158,7 @@ Here is an example of a wol.json to shutdown a Debian based computer
 
 :heavy_check_mark: Add ARP SCAN to add you computer of for availability check (added in 5.0.0)
 
-- Add filter buttons to filter computer by Name or IP
+:heavy_check_mark: Add Sort button to sort computer by Name, IP or MAC (added in 5.2.0)
 
 ## Questions
 
