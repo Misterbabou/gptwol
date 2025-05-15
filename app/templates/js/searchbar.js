@@ -24,6 +24,10 @@ function clearSearchInput() {
   filterComputers(); // Reset the filter
 }
 
+function ipToNumber(ip) {
+  return ip.split('.').reduce((acc, octet) => (acc << 8) + Number(octet), 0);
+}
+
 function sortComputers(criteria) {
   const cardsContainer = document.querySelector('.row.justify-content-center');
   const cards = Array.from(cardsContainer.children); // Convert NodeList to Array
@@ -43,20 +47,21 @@ function sortComputers(criteria) {
         aValue = a.querySelector('.card-title').textContent.toLowerCase();
         bValue = b.querySelector('.card-title').textContent.toLowerCase();
         dropdownItems[0].classList.add('active'); // Sort by Name
-        break;
+        return aValue.localeCompare(bValue); // Compare values for sorting
+
       case 'ip':
-        aValue = a.querySelector('.text-end:nth-of-type(1)').textContent.toLowerCase(); // IP address
-        bValue = b.querySelector('.text-end:nth-of-type(1)').textContent.toLowerCase(); // IP address
+        const aIp = a.querySelector('.text-end:nth-of-type(1)').textContent;
+        const bIp = b.querySelector('.text-end:nth-of-type(1)').textContent;
         dropdownItems[1].classList.add('active'); // Sort by IP
-        break;
+
+        return ipToNumber(aIp) - ipToNumber(bIp); // Compare numeric values
+
       case 'mac':
         aValue = a.querySelector('.text-end:nth-of-type(2)').textContent.toLowerCase(); // MAC address
         bValue = b.querySelector('.text-end:nth-of-type(2)').textContent.toLowerCase(); // MAC address
         dropdownItems[2].classList.add('active'); // Sort by MAC
-        break;
+        return aValue.localeCompare(bValue); // Compare values for sorting
     }
-
-    return aValue.localeCompare(bValue); // Compare values for sorting
   });
 
   // Clear the current cards and append sorted cards

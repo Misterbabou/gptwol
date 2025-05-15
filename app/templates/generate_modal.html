@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wake On LAN tool to manage and wake computers on your network.">
+    <title>GPTWOL</title>
+    <link rel="shortcut icon" href="/">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/gptwol.png') }}"/>
+    <link rel="icon" href="{{ url_for('static', filename='images/gptwol.png') }}" type="image/png"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/bootstrap-5.3.6/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/fontawesome-6.7.2/css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/fontawesome-6.7.2/css/brands.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/fontawesome-6.7.2/css/solid.min.css') }}">
+    <script src="{{ url_for('static', filename='assets/bootstrap-5.3.6/js/bootstrap.bundle.min.js') }}"></script>
+  </head>
+  <body>
+    <!-- Modal -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="messageModalLabel">{{ title }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            {{ message_content|safe }}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="closeModalButton">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <script>
+      // Show the modal when the page loads
+      var myModal = new bootstrap.Modal(document.getElementById('messageModal'));
+      myModal.show();
+  
+      // Redirect to root index when the close button is clicked
+      document.getElementById('closeModalButton').addEventListener('click', function() {
+          window.history.back();
+      });
+  
+      // Redirect to root index when the modal is closed (backdrop click or escape key)
+      document.getElementById('messageModal').addEventListener('hidden.bs.modal', function () {
+          window.history.back();
+      });
+    </script>
+  </body>
+</html>
