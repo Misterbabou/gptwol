@@ -76,7 +76,7 @@ services:
       #- ENABLE_LOGIN=false # Enable or disable login; You would be able to access with USERNAME and PASSWORD; default is false
       #- USERNAME=admin # Set a username; default is admin
       #- PASSWORD=admin # Set a password; default is admin
-      #- SCRIPT_NAME=/my-app # Uncomment this line to run the app under a prefix; default is /
+      #- SCRIPT_NAME=/my-app # Uncomment this line to run the app under a prefix; default is not set
       #- ENABLE_ADD_DEL=true # Enable or disable ADD computer and Delete computer buttons; default is true
       #- ENABLE_REFRESH=true # Enable or disable automatic status refresh; default is true
       #- REFRESH_INTERVAL=30 # Uncomment to change status check for icmp, arp or tcp, can be 15, 30 or 60 (seconds); default value is 30 seconds
