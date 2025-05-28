@@ -81,7 +81,7 @@ services:
       #- ENABLE_REFRESH=true # Enable or disable automatic status refresh; default is true
       #- REFRESH_INTERVAL=30 # Uncomment to change status check for icmp, arp or tcp, can be 15, 30 or 60 (seconds); default value is 30 seconds
       #- PING_TIMEOUT=300 #Uncomment to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
-      #- ARP_INTERFACE=eth0 #Uncomment this line to set an arp interface mannually for scan an test; default is not set
+      #- ARP_INTERFACE=eth0 #Uncomment this line to set an arp interface manually for scan and test; default is not set
       #- ARP_TIMEOUT=300 #Uncomment to change the time to wait for a arp answer in (in ms); default value is 300 milliseconds
       #- TCP_TIMEOUT=1 #Uncomment to change the time to wait for a tcp check (in s);  default value 1 second
     volumes:
