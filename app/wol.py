@@ -11,6 +11,7 @@ port = os.environ.get('PORT', 5000)
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
 arp_timeout = os.environ.get('ARP_TIMEOUT', 300)
 tcp_timeout = os.environ.get('TCP_TIMEOUT', 1)
+arp_interface = os.environ.get('ARP_INTERFACE')
 cron_filename = '/etc/cron.d/gptwol'
 computer_filename = 'db/computers.txt'
 computer_old_filename = 'computers.txt'
@@ -149,7 +150,11 @@ def is_computer_awake_icmp(ip_address, timeout=ping_timeout):
 
 def is_computer_awake_arp(ip_address, timeout=arp_timeout):
   # Use the arp-scan command to check if the computer is awake
-  result = subprocess.run(['arp-scan', '-qx', '-t', str(timeout), ip_address], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+  command = ['arp-scan', '-qx', '-t', str(timeout), ip_address]
+  if arp_interface:
+    command += ['-I', arp_interface]
+
+  result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
   # Check if there is any output in stdout
   return bool(result.stdout.strip())
 
@@ -419,7 +424,12 @@ def arp_scan():
     # Load the list of active computers
     computers = load_computers()
     active_mac_addresses = {computer['mac_address'] for computer in computers}
-    result = subprocess.check_output(['arp-scan', '-lqx', '-t', str(arp_timeout)], universal_newlines=True)
+
+    command = ['arp-scan', '-lqx', '-t', str(arp_timeout)]
+    if arp_interface:
+      command += ['-I', arp_interface]
+
+    result = subprocess.check_output(command, universal_newlines=True)
     lines = result.strip().split('\n')
 
     devices = []
@@ -437,7 +447,7 @@ def arp_scan():
     return jsonify(devices)
 
   except Exception as e:
-    return jsonify({'error': str(e)}), 500
+    return jsonify({'message': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)
