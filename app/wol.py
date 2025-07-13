@@ -187,7 +187,7 @@ def check_invalid_ip(ip):
 
 def check_invalid_mac(mac):
   # Regular expression for validating a MAC address
-  mac_pattern = r'^([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})$'
+  mac_pattern = r'^([0-9a-fA-F]{2}:){5}([0-9a-fA-F]{2})$'
   # Check if the MAC address matches the pattern
   if re.match(mac_pattern, mac):
     return False  # Valid MAC address
