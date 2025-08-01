@@ -18,6 +18,10 @@
     <script>
       const arp_scan_url = "{{ url_for('arp_scan') }}";
       const check_status_url = "{{ url_for('check_status') }}";
+      const add_wol_cron_url = "{{ url_for('add_wol_cron') }}"
+      const add_sol_cron_url = "{{ url_for('add_sol_cron') }}"
+      const delete_wol_cron_url = "{{ url_for('delete_wol_cron') }}"
+      const delete_sol_cron_url = "{{ url_for('delete_sol_cron') }}"
 
       {% if os.environ.get('ENABLE_REFRESH') != 'false' -%}
         setInterval(() => {
@@ -115,92 +119,62 @@
    {% endif -%}
 
     <div class="container-fluid">
-      <div class="row justify-content-center">
+      <div class="row row-sortable">
         {% for computer in computers %}
-        <div class="col-lg-4 col-md-6 computer-card">
-          <div class="card mt-2">
-            <div class="card-body">
-              <h5 class="card-title">{{ computer.name }} <span class="status-indicator asleep" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}"></span></h5>
-              <div class="text-end">IP: {{ computer.ip_address }}</div>
-              <div class="text-end">MAC: {{ computer.mac_address }}</div>
-              {% if computer.test_type == 'icmp' -%}
-              <div class="text-end">Check: ICMP</div>
-              {% elif computer.test_type == 'arp' -%}
-              <div class="text-end">Check: ARP</div>
-              {% else -%}
-              <div class="text-end">Check: TCP {{ computer.test_type }}</div>
-              {% endif -%}
-              <div class="row align-items-center g-0">
-              {% if computer.cron_wol_schedule is defined -%}
-                <div class="col-md-auto w-auto">Wake cron:  <span class="badge bg-secondary rounded-pill fs-6">{{ computer.cron_wol_schedule }}</span></div>
-                {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
-                <div class="col-md-auto w-auto">
-                  <button class="delete-button" type="submit" title="Delete Cron" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_wol_cron') }}', 'mac_address', '{{ computer.mac_address }}', 'Wake cron of {{ computer.name }}')">
-                    <i class="fa-regular fa-trash-can"></i>
-                  </button>
-                </div>
-                {% endif -%}
-              {% else -%}
-                {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
-                <div class="col-md-auto w-auto pe-1">Wake cron: </div>
-                <div class="col-md-auto w-auto">
-                  <form method="POST" action="{{ url_for('add_wol_cron') }}">
+        <div class="col-lg-3 col-md-6 d-flex computer-card">
+          <div class="card mt-2 flex-fill d-flex flex-column">
+            <div class="card-body d-flex flex-column flex-grow-1">
+              <div class="title-sortable row justify-content-start p-1">
+                <div class="col-auto">
+                  <form method="POST" action="{{ url_for('wol_or_sol_send') }}">
                     <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-                    <input class="w-50 border pt-1" type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
-                    <button class="add-button" type="submit" title="Add Cron">
-                       <i class="fa-solid fa-plus"></i>
+                    <button type="submit" class="btn btn-success btn-circle btn-xl status-power">
+                      <i class="fa-solid fa-power-off"></i>
                     </button>
                   </form>
                 </div>
-              {% else -%}
-                <div class="col-md-auto">Wake cron: Not defined</div>
-                {% endif -%}
-              {% endif -%}
+                <div class="col-auto px-0 my-auto">
+                  <div class="sortable fs-4">{{ computer.name }}</div>
+                </div>
               </div>
-              <div class="row align-items-center g-0">
-              {% if computer.cron_sol_schedule is defined -%}
-                <div class="col-md-auto w-auto">Sleep cron:  <span class="badge bg-secondary rounded-pill fs-6">{{ computer.cron_sol_schedule }}</span></div>
-                {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
-                <div class="col-md-auto w-auto">
-                  <button class="delete-button" type="submit" title="Delete Cron" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_sol_cron') }}', 'mac_address', '{{ computer.mac_address }}', 'Sleep cron of {{ computer.name }}')">
-                    <i class="fa-regular fa-trash-can"></i>
-                  </button>
+              <div class="d-flex justify-content-end flex-grow-1">
+                <div class="info-sortable">
+                  <div class="sortable">IP    : {{ computer.ip_address }}</div>
+                  <div class="sortable">MAC   : {{ computer.mac_address }}</div>
+                  {% if computer.test_type in ['icmp', 'arp'] -%}
+                  <div>Check : {{ computer.test_type | upper }}
+                  {% else -%}
+                  <div>Check : TCP {{ computer.test_type }}
+                  {% endif -%}
+                  <span class="status-indicator asleep" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}"></span></div>
+                  {% if computer.cron_wol_schedule is defined -%}
+                  <div class="mt-1 text-light rounded-pill bg-success px-2">
+                    <i class="fa-solid fa-arrow-up"></i>
+                    <span>{{ computer.cron_wol_schedule }}</span>
+                  </div>
+                  {% endif -%}
+                  {% if computer.cron_sol_schedule is defined -%}
+                  <div class="mt-1 text-light rounded-pill bg-danger px-2">
+                    <i class="fa-solid fa-arrow-down"></i>
+                    <span>{{ computer.cron_sol_schedule }}</span>
+                  </div>
+                  {% endif -%}
                 </div>
-                {% endif -%}
-              {% else -%}
-                {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
-                <div class="col-md-auto w-auto pe-1">Sleep cron: </div>
-                <div class="col-md-auto w-auto">
-                  <form method="POST" action="{{ url_for('add_sol_cron') }}">
-                    <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-                    <input class="w-50 border pt-1" type="text" name="cron_request" id="cron_request" placeholder="0 12 * * *" oninput="resizeInput()" required>
-                    <button class="add-button" type="submit" title="Add Cron">
-                       <i class="fa-solid fa-plus"></i>
-                    </button>
-                  </form>
-                </div>
-              {% else -%}
-                <div class="col-md-auto">Sleep cron: Not defined</div>
-                {% endif -%}
-              {% endif -%}
               </div>
             </div>
-            <div class="card-footer text-end">
-              <form method="POST" action="{{ url_for('wol_or_sol_send') }}" style="display: inline-block;">
-                <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-                <button type="submit" class="btn btn-success status-power">
-                  <i class="fa-solid fa-power-off"></i>
-                </button>
-              </form>
-              {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
-              <button type="button" class="btn btn-primary" title="Edit computer" data-bs-toggle="modal" data-bs-target="#editComputer" data-name="{{ computer.name }}" data-mac-address="{{ computer.mac_address }}" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}">
+            {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
+            <div class="card-footer text-end py-0">
+              <button type="button" class="btn btn-primary btn-circle btn-lg" title="Configure Cron" data-bs-toggle="modal" data-bs-target="#cronSettingsModal" onclick="loadCronSettings('{{ computer.name }}', '{{ computer.cron_wol_schedule }}', '{{ computer.cron_sol_schedule }}', '{{ computer.mac_address }}')">
+                <i class="fa-regular fa-clock"></i>
+              </button>
+              <button type="button" class="btn btn-primary btn-circle btn-lg m-2" title="Edit computer" data-bs-toggle="modal" data-bs-target="#editComputer" data-name="{{ computer.name }}" data-mac-address="{{ computer.mac_address }}" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}">
                 <i class="fa-regular fa-pen-to-square"></i>
               </button>
-              <button type="button" class="btn btn-danger" title="Delete computer" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_computer') }}', 'mac_address', '{{ computer.mac_address }}', 'Computer {{ computer.name }}')">
+              <button type="button" class="btn btn-danger btn-circle btn-lg" title="Delete computer" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_computer') }}', 'mac_address', '{{ computer.mac_address }}', 'Computer {{ computer.name }}')">
                 <i class="fa-regular fa-trash-can"></i>
               </button>
-              {% endif -%}
             </div>
+            {% endif -%}
           </div>
         </div>
         {% endfor %}
@@ -280,6 +254,23 @@
       </div>
     </div>
 
+    <div class="modal fade" id="cronSettingsModal" tabindex="-1" aria-labelledby="cronSettingsModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="cronSettingsModalLabel">Schedule Wake or Sleep</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="cronSettingsContent"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal fade" id="staticDelete" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticDeleteLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -332,13 +323,8 @@
                   <span>GPTWOL</span>
                 </a>
               </p>
-              <p><strong>Version:</strong> 5.3.2</p>
+              <p><strong>Version:</strong> 6.0.0</p>
               <p><strong>License:</strong> MIT</p>
-            </div>
-            <hr>
-            <div class="text-center">
-              <p><strong>Documentation:</strong></p>
-              <p>- <a class="text-decoration-none" href="https://github.com/Misterbabou/gptwol#configure-sleep-on-lan" target="_blank" rel="noopener noreferrer">Configure Sleep on Lan</a></p>
             </div>
           </div>
           <div class="modal-footer">
@@ -350,6 +336,7 @@
 
     {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
     <script src="{{ url_for('static', filename='js/editcomputer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/editcron.js') }}"></script>
     <script src="{{ url_for('static', filename='js/delcomputer.js') }}"></script>
     {% endif -%}
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
