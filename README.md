@@ -84,6 +84,8 @@ services:
       #- ARP_INTERFACE=eth0 #Uncomment this line to set an arp interface manually for scan and test; default is not set
       #- ARP_TIMEOUT=300 #Uncomment to change the time to wait for a arp answer in (in ms); default value is 300 milliseconds
       #- TCP_TIMEOUT=1 #Uncomment to change the time to wait for a tcp check (in s);  default value 1 second
+      #- L2_WOL_PAKET=true # activate l2 paket
+      #- L2_INTERFACE=eth0 # L2 Interface
     volumes:
       - ./appdata/db:/app/db
       - ./appdata/cron:/etc/cron.d
