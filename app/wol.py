@@ -7,14 +7,12 @@ import os
 import ipaddress
 import re
 
-port = os.environ.get('PORT', 5000)
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
 arp_timeout = os.environ.get('ARP_TIMEOUT', 300)
 tcp_timeout = os.environ.get('TCP_TIMEOUT', 1)
 arp_interface = os.environ.get('ARP_INTERFACE')
 cron_filename = '/etc/cron.d/gptwol'
 computer_filename = 'db/computers.txt'
-computer_old_filename = 'computers.txt'
 
 app = Flask(__name__, static_folder='templates')
 app.secret_key = os.urandom(24)
@@ -76,9 +74,6 @@ def generate_modal_html(messages, title):
 def load_computers():
   # Load the list of computers from the configuration file
   computers = []
-  # Check for warning
-  if os.path.exists(computer_old_filename):
-    os.environ['OLD_COMPUTER_FILE_WARNING'] = 'true'
   directory = "db"
   if not os.path.exists(directory):
     os.makedirs(directory)
@@ -448,6 +443,3 @@ def arp_scan():
 
   except Exception as e:
     return jsonify({'message': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=port)

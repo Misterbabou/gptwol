@@ -33,10 +33,8 @@
             const buttonElement = element.closest('.card').querySelector('.status-power');
             updateStatus(ip_address, test_type, element, buttonElement);
           }
-        {% if os.environ.get('REFRESH_INTERVAL') == '60' -%}
-        }, 60000);
-        {% elif os.environ.get('REFRESH_INTERVAL') == '15' -%}
-        }, 15000);
+        {% if os.environ.get('REFRESH_INTERVAL') -%}
+        }, {{ os.environ.get('REFRESH_INTERVAL') | int * 1000 }});
         {% else -%}
         }, 30000);
         {% endif -%}
@@ -110,13 +108,6 @@
         </div>
       </div>
     </nav>
-
-   {% if os.environ.get('OLD_COMPUTER_FILE_WARNING') -%}
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      Computers migration needed see <a href="https://github.com/Misterbabou/gptwol/blob/main/docs/migration.md" target="_blank">Migration link</a>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-   {% endif -%}
 
     <div class="container-fluid">
       <div class="row row-sortable">
@@ -323,7 +314,7 @@
                   <span>GPTWOL</span>
                 </a>
               </p>
-              <p><strong>Version:</strong> 6.0.0</p>
+              <p><strong>Version:</strong> 6.0.1</p>
               <p><strong>License:</strong> MIT</p>
             </div>
           </div>

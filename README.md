@@ -71,18 +71,19 @@ services:
     network_mode: host
     restart: unless-stopped
     environment:
-      - PORT=5000 #Free Port on Your host; default is 5000
       - TZ=Europe/Paris #Set your timezone for Cron; default is UTC
+      #- PORT=5000 #Free Port on Your host; default is 5000
+      #- IP=0.0.0.0 #App listening IPV4 or IPV6 (ex [::]) address; default is 0.0.0.0
       #- ENABLE_LOGIN=false # Enable or disable login; You would be able to access with USERNAME and PASSWORD; default is false
       #- USERNAME=admin # Set a username; default is admin
       #- PASSWORD=admin # Set a password; default is admin
       #- SCRIPT_NAME=/my-app # Uncomment this line to run the app under a prefix; default is not set
       #- ENABLE_ADD_DEL=true # Enable or disable ADD computer and Delete computer buttons; default is true
       #- ENABLE_REFRESH=true # Enable or disable automatic status refresh; default is true
-      #- REFRESH_INTERVAL=30 # Uncomment to change status check for icmp, arp or tcp, can be 15, 30 or 60 (seconds); default value is 30 seconds
+      #- REFRESH_INTERVAL=30 # Uncomment to change time between each status check for icmp, arp or tcp, can (in s); default value is 30 seconds
       #- PING_TIMEOUT=300 #Uncomment to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
       #- ARP_INTERFACE=eth0 #Uncomment this line to set an arp interface manually for scan and test; default is not set
-      #- ARP_TIMEOUT=300 #Uncomment to change the time to wait for a arp answer in (in ms); default value is 300 milliseconds
+      #- ARP_TIMEOUT=300 #Uncomment to change the time to wait for a arp answer (in ms); default value is 300 milliseconds
       #- TCP_TIMEOUT=1 #Uncomment to change the time to wait for a tcp check (in s);  default value 1 second
     volumes:
       - ./appdata/db:/app/db
