@@ -1,20 +1,19 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from scapy.all import Ether, sendp
+from scapy.layers.l2 import Ether, sendp
 import socket
 import struct
 import subprocess
 import os
 import ipaddress
 import re
-import binascii
 
 port = os.environ.get('PORT', 5000)
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
 arp_timeout = os.environ.get('ARP_TIMEOUT', 300)
 tcp_timeout = os.environ.get('TCP_TIMEOUT', 1)
 arp_interface = os.environ.get('ARP_INTERFACE')
-l2_wol_paket = os.environ.get('L2_WOL_PAKET')
+l2_wol_packet = os.environ.get('ENABLE_L2_WOL_PACKET', 'false').lower() == 'true'
 l2_interface = os.environ.get('L2_INTERFACE', 'eth0')
 cron_filename = '/etc/cron.d/gptwol'
 computer_filename = 'db/computers.txt'
@@ -129,9 +128,9 @@ def load_computers():
 
 computers = load_computers()
 
-def send_raw_wol(mac_address, interface='eth0'):
+def send_raw_wol(mac_address, interface):
     mac_clean = mac_address.replace(':', '').replace('-', '')
-    mac_bytes = binascii.unhexlify(mac_clean)
+    mac_bytes = bytes.fromhex(mac_clean)
 
     magic_packet = b'\xff' * 6 + mac_bytes * 16
 
@@ -425,7 +424,7 @@ def wol_or_sol_send():
     messages.append(f"Sleep On Lan Magic Packet Sent to {computer['name']}!")
     messages.append('See : <a href="https://github.com/Misterbabou/gptwol#configure-sleep-on-lan" target="_blank" rel="noopener noreferrer">how to configure Sleep on LAN</a>')
   else:
-    if l2_wol_paket:
+    if l2_wol_packet:
       send_raw_wol(mac_address, l2_interface)
     else:
       send_wol_packet(mac_address)
