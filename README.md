@@ -164,6 +164,8 @@ Here is an example of a wol.json to shutdown a Debian based computer
 
 :heavy_check_mark: Add Sort button to sort computer by Name, IP or MAC (added in 5.2.0)
 
+:heavy_check_mark: Migrate computers to a SQLite database (added in 7.0.0)
+
 ## Questions
 
 <details>

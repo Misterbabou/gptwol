@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from scapy.layers.l2 import Ether, sendp
+from flask_sqlalchemy import SQLAlchemy
 import socket
 import struct
 import subprocess
@@ -21,6 +22,12 @@ app = Flask(__name__, static_folder='templates')
 app.secret_key = os.urandom(24)
 enable_login = os.environ.get('ENABLE_LOGIN', 'false')
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+db_path = os.path.join(BASE_DIR, "db", "computers.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -38,7 +45,7 @@ def conditional_login_required(func):
 # In-memory user store (for simplicity)
 username = os.environ.get('USERNAME', 'admin')
 password = os.environ.get('PASSWORD', 'admin')
-users = {username: {'password': password}}  # Replace with your credentials
+users = {username: {'password': password}}
 
 # User model
 class User(UserMixin):
@@ -74,31 +81,48 @@ def generate_modal_html(messages, title):
   message_content = '<br>'.join(messages)
   return render_template('generate_modal.html', title=title, message_content=message_content)
 
-def load_computers():
-  # Load the list of computers from the configuration file
-  computers = []
-  directory = "db"
-  if not os.path.exists(directory):
-    os.makedirs(directory)
+class Computer(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(64), nullable=False)
+  mac_address = db.Column(db.String(17), unique=True, nullable=False)
+  ip_address = db.Column(db.String(45), nullable=False)
+  test_type = db.Column(db.String(10), nullable=False)
+
+def migrate_txt_to_db():
   if not os.path.exists(computer_filename):
-    open(computer_filename, 'w').close()  # create the file if it doesn't exist
+    return
+
   with open(computer_filename) as f:
     for line in f:
       fields = line.strip().split(',')
-      name = fields[0]
-      mac_address = fields[1]
-      ip_address = fields[2]
-      test_type = fields[3] if len(fields) >= 4 else 'icmp'  # Default to 'icmp' if test_type is not specified
-      if not test_type.strip():  # Check if test_type is empty or whitespace
-        test_type = 'icmp'
-        line = f"{name},{mac_address},{ip_address},{test_type}\n"  # Update the line with 'icmp'
-        with open(computer_filename, 'a') as f:
-          f.write(line)  # Write the updated line to the file
-      computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address, 'test_type': test_type})
+      if len(fields) < 3:
+        continue
+      name, mac, ip = fields[0], fields[1], fields[2]
+      test_type = fields[3] if len(fields) > 3 else 'icmp'
 
-  # Load the cron schedule information for each computer
+      if not Computer.query.filter_by(mac_address=mac).first():
+        c = Computer(name=name, mac_address=mac, ip_address=ip, test_type=test_type)
+        db.session.add(c)
+
+  db.session.commit()
+  os.rename(computer_filename, f"{computer_filename}.old")
+
+def load_computers():
+  computers = []
+  db.create_all()  # Ensure tables are created
+
+  for c in Computer.query.all():
+    computers.append({
+      'name': c.name,
+      'mac_address': c.mac_address,
+      'ip_address': c.ip_address,
+      'test_type': c.test_type
+    })
+
+  # Cron loading
   if not os.path.exists(cron_filename):
-    open(cron_filename, 'w').close()  # create the file if it doesn't exist
+    open(cron_filename, 'w').close()
+
   with open(cron_filename) as f:
     for line in f:
       if not line.startswith('#'):
@@ -109,21 +133,16 @@ def load_computers():
         mac_address = command.split()[-1]
         reversed_mac_address = ':'.join(reversed(mac_address.split(':')))
 
-        # Find the computer WOL MAC address
-        computer = next((c for c in computers if c['mac_address'] == mac_address), None)
-        if computer:
-          computer['cron_wol_schedule'] = schedule
-
-        # Find the computer SOL MAC address
-        computer_reversed = next((c for c in computers if c['mac_address'] == reversed_mac_address), None)
-        if computer_reversed:
-          computer_reversed['cron_sol_schedule'] = schedule
+        # Find and add cron info to matching computer
+        for computer in computers:
+          if computer['mac_address'] == mac_address:
+            computer['cron_wol_schedule'] = schedule
+          if computer['mac_address'] == reversed_mac_address:
+            computer['cron_sol_schedule'] = schedule
 
   return computers
 
-computers = load_computers()
-
-def send_raw_wol(mac_address, interface):
+def send_l2_wol_packet(mac_address, interface):
     mac_clean = mac_address.replace(':', '').replace('-', '')
     mac_bytes = bytes.fromhex(mac_clean)
 
@@ -171,20 +190,11 @@ def is_computer_awake_tcp(ip_address, port, timeout=tcp_timeout):
   result = subprocess.run(['nc', '-z', '-w', str(timeout), ip_address, str(port)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
   return result.returncode == 0
 
-def initial_computer_status(ip_address, test_type):
-  return "asleep"
+def check_mac_exist(mac_address):
+  return db.session.query(Computer.id).filter_by(mac_address=mac_address).first() is not None
 
-def check_name_exist(name, computers):
-  for computer in computers:
-    if computer['name'] == name:
-      return True
-  return False
-
-def check_mac_exist(mac_address, computers):
-  for computer in computers:
-    if computer['mac_address'] == mac_address:
-      return True
-  return False
+def check_invalid_name(name):
+  return ',' in name
 
 def check_invalid_ip(ip):
   try:
@@ -257,7 +267,7 @@ def delete_cron_entry(request_mac_address):
 @conditional_login_required
 def wol_form():
   computers = load_computers()
-  return render_template('wol_form.html', computers=computers, is_computer_awake=initial_computer_status, os=os)
+  return render_template('wol_form.html', computers=computers, is_computer_awake=lambda *_: "asleep", os=os)
 
 @app.route('/delete_computer', methods=['POST'])
 @conditional_login_required
@@ -270,11 +280,9 @@ def delete_computer():
   reversed_mac_address = ':'.join(reversed(mac_address.split(':')))
   delete_cron_entry(reversed_mac_address)
 
-  computers[:] = [computer for computer in computers if computer['mac_address'] != mac_address]
-  # Save the updated list of computers to the configuration file
-  with open(computer_filename, 'w') as f:
-    for computer in computers:
-      f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
+  Computer.query.filter_by(mac_address=mac_address).delete()
+  db.session.commit()
+
   return redirect(url_for('wol_form'))
 
 @app.route('/add_computer', methods=['POST'])
@@ -287,10 +295,10 @@ def add_computer():
 
   messages = []
   # Check Entries
-  if check_name_exist(name, computers):
-    messages.append(f'Computer name: {name} already exists.')
-  if check_mac_exist(mac_address, computers):
+  if check_mac_exist(mac_address):
     messages.append(f'Computer mac: {mac_address} already exists.')
+  if check_invalid_name(name):
+    messages.append(f'NAME: {name} is invalid. Character , is invalid')
   if check_invalid_ip(ip_address):
     messages.append(f'IP: {ip_address} is invalid.')
   if check_invalid_mac(mac_address):
@@ -300,11 +308,10 @@ def add_computer():
   if messages:
     return generate_modal_html(messages, 'Add Computer Error')
 
-  computers.append({'name': name, 'mac_address': mac_address, 'ip_address': ip_address, 'test_type': test_type})
-  # Save the updated list of computers to the configuration file
-  with open(computer_filename, 'w') as f:
-    for computer in computers:
-      f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
+  new_computer = Computer(name=name, mac_address=mac_address, ip_address=ip_address, test_type=test_type)
+  db.session.add(new_computer)
+  db.session.commit()
+
   return redirect(url_for('wol_form'))
 
 @app.route('/edit_computer', methods=['POST'])
@@ -316,14 +323,13 @@ def edit_computer():
   test_type = request.form['test_type']
 
   # Find the computer being edited
-  computer_to_edit = next((computer for computer in computers if computer['mac_address'] == mac_address), None)
+  computer_to_edit = Computer.query.filter_by(mac_address=mac_address).first()
 
   messages = []
   if computer_to_edit is None:
     messages.append(f'Computer with MAC address: {mac_address} not found.')
-  # Check if the name is being changed and if it already exists
-  if computer_to_edit['name'] != name and check_name_exist(name, computers):
-    messages.append(f'Computer name: {name} already exists.')
+  if check_invalid_name(name):
+    messages.append(f'NAME: {name} is invalid. Character , is invalid')
   if check_invalid_ip(ip_address):
     messages.append(f'IP: {ip_address} is invalid.')
   if check_invalid_test_type(test_type):
@@ -331,21 +337,15 @@ def edit_computer():
   if messages:
     return generate_modal_html(messages, 'Edit Computer Error')
 
-  if computer_to_edit['name'] == name and computer_to_edit['ip_address'] == ip_address and computer_to_edit['test_type'] == test_type:
+  if (computer_to_edit.name == name and computer_to_edit.ip_address == ip_address and computer_to_edit.test_type == test_type):
     messages.append(f'No change was made.')
     return generate_modal_html(messages, 'Edit Computer Info')
 
-  for computer in computers:
-    if computer['mac_address'] == mac_address:
-      computer['name'] = name
-      computer['ip_address'] = ip_address
-      computer['test_type'] = test_type
-      break
+  computer_to_edit.name = name
+  computer_to_edit.ip_address = ip_address
+  computer_to_edit.test_type = test_type
+  db.session.commit()
 
-  # Save the updated list of computers to the configuration file
-  with open(computer_filename, 'w') as f:
-    for computer in computers:
-      f.write('{},{},{},{}\n'.format(computer['name'], computer['mac_address'], computer['ip_address'], computer['test_type']))
   return redirect(url_for('wol_form'))
 
 def add_cron(mac_address, request_cron):
@@ -407,6 +407,8 @@ def check_status():
 @conditional_login_required
 def wol_or_sol_send():
   mac_address = request.form['mac_address']
+  computers = load_computers()
+
   computer = next(c for c in computers if c['mac_address'] == mac_address)
   ip_address = computer['ip_address']
   test_type = computer['test_type']
@@ -420,8 +422,10 @@ def wol_or_sol_send():
     messages.append('See : <a href="https://github.com/Misterbabou/gptwol#configure-sleep-on-lan" target="_blank" rel="noopener noreferrer">how to configure Sleep on LAN</a>')
   else:
     if l2_wol_packet:
-      send_raw_wol(mac_address, l2_interface)
+      messages.append(f"Wake On Lan Mode: L2 Packet")
+      send_l2_wol_packet(mac_address, l2_interface)
     else:
+      messages.append(f"Wake On Lan Mode: L4 Packet")
       send_wol_packet(mac_address)
     title = "Wakeup"
     messages.append(f"Wake On Lan Magic Packet Sent to {computer['name']}!")
@@ -459,3 +463,7 @@ def arp_scan():
 
   except Exception as e:
     return jsonify({'message': str(e)}), 500
+
+with app.app_context():
+  db.create_all()
+  migrate_txt_to_db()
