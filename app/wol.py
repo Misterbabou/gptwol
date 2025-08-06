@@ -82,9 +82,8 @@ def generate_modal_html(messages, title):
   return render_template('generate_modal.html', title=title, message_content=message_content)
 
 class Computer(db.Model):
-  id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(64), nullable=False)
-  mac_address = db.Column(db.String(17), unique=True, nullable=False)
+  mac_address = db.Column(db.String(17), unique=True, primary_key=True, nullable=False)
   ip_address = db.Column(db.String(45), nullable=False)
   test_type = db.Column(db.String(10), nullable=False)
 
@@ -191,7 +190,7 @@ def is_computer_awake_tcp(ip_address, port, timeout=tcp_timeout):
   return result.returncode == 0
 
 def check_mac_exist(mac_address):
-  return db.session.query(Computer.id).filter_by(mac_address=mac_address).first() is not None
+  return db.session.query(Computer.mac_address).filter_by(mac_address=mac_address).first() is not None
 
 def check_invalid_name(name):
   return ',' in name
