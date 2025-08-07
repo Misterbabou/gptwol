@@ -8,6 +8,7 @@ import subprocess
 import os
 import ipaddress
 import re
+import fcntl
 
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
 arp_timeout = os.environ.get('ARP_TIMEOUT', 300)
@@ -141,13 +142,24 @@ def load_computers():
 
   return computers
 
+def get_mac_address(interface):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    info = fcntl.ioctl(
+        s.fileno(),
+        0x8927,  # SIOCGIFHWADDR
+        struct.pack('256s', interface[:15].encode('utf-8'))
+    )
+    mac = ':'.join('%02x' % b for b in info[18:24])
+    return mac
+
 def send_l2_wol_packet(mac_address, interface):
     mac_clean = mac_address.replace(':', '').replace('-', '')
     mac_bytes = bytes.fromhex(mac_clean)
+    src_mac = get_mac_address(interface)
 
     magic_packet = b'\xff' * 6 + mac_bytes * 16
 
-    ether_frame = Ether(dst='ff:ff:ff:ff:ff:ff', type=0x0842) / magic_packet
+    ether_frame = Ether(dst='ff:ff:ff:ff:ff:ff', src=src_mac, type=0x0842) / magic_packet
 
     sendp(ether_frame, iface=interface, verbose=False)
 
