@@ -1,6 +1,5 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from scapy.layers.l2 import Ether, sendp
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 import socket
 import struct
@@ -8,6 +7,7 @@ import subprocess
 import os
 import ipaddress
 import re
+import fcntl
 
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
 arp_timeout = os.environ.get('ARP_TIMEOUT', 300)
@@ -22,8 +22,7 @@ app = Flask(__name__, static_folder='templates')
 app.secret_key = os.urandom(24)
 enable_login = os.environ.get('ENABLE_LOGIN', 'false')
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-db_path = os.path.join(BASE_DIR, "db", "computers.db")
+db_path = '/app/db/computers.db'
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -141,15 +140,41 @@ def load_computers():
 
   return computers
 
+def get_interface_mac(interface):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        info = fcntl.ioctl(
+            s.fileno(),
+            0x8927,  # SIOCGIFHWADDR
+            struct.pack('256s', interface.encode('utf-8')[:15])
+        )
+        return info[18:24]  # MAC address bytes
+    finally:
+        s.close()
+
 def send_l2_wol_packet(mac_address, interface):
+    # Clean and convert target MAC address to bytes
     mac_clean = mac_address.replace(':', '').replace('-', '')
     mac_bytes = bytes.fromhex(mac_clean)
 
+    # Build the magic packet
     magic_packet = b'\xff' * 6 + mac_bytes * 16
 
-    ether_frame = Ether(dst='ff:ff:ff:ff:ff:ff', type=0x0842) / magic_packet
+    # Destination: broadcast, Source: real MAC from interface
+    dst_mac = b'\xff\xff\xff\xff\xff\xff'
+    src_mac = get_interface_mac(interface)
+    eth_type = b'\x08\x42'  # Wake-on-LAN EtherType
 
-    sendp(ether_frame, iface=interface, verbose=False)
+    # Construct Ethernet frame
+    ether_frame = dst_mac + src_mac + eth_type + magic_packet
+
+    # Send via raw socket
+    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
+    try:
+        s.bind((interface, 0))
+        s.send(ether_frame)
+    finally:
+        s.close()
 
 def send_wol_packet(mac_address):
   # Convert the MAC address to a packed binary string

@@ -1,6 +1,4 @@
 Flask
-WakeOnLan
 gunicorn
 flask-login
 flask-sqlalchemy
-scapy

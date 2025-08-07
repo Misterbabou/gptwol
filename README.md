@@ -86,7 +86,7 @@ services:
       #- ARP_TIMEOUT=300 #Uncomment to change the time to wait for a arp answer (in ms); default value is 300 milliseconds
       #- TCP_TIMEOUT=1 #Uncomment to change the time to wait for a tcp check (in s);  default value 1 second
       #- ENABLE_L2_WOL_PACKET=false # Enable L2 WOL packet instead of L4, default is false
-      #- L2_INTERFACE=eth0 # Set the default interface for L2 WOL, default is eth0
+      #- L2_INTERFACE=eth0 # Set the default interface for L2 WOL (set this only if you set ENABLE_L2_WOL_PACKET to true), default is eth0
     volumes:
       - ./appdata/db:/app/db
       - ./appdata/cron:/etc/cron.d
