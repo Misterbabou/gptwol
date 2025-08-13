@@ -1,6 +1,6 @@
-FROM python:3.13-slim-bookworm
+FROM python:3.13-slim
 
-RUN apt-get update && apt-get install -y fping systemctl cron netcat-traditional arp-scan unzip curl
+RUN apt-get update && apt-get install -y fping cron netcat-traditional arp-scan unzip curl
 
 # Define ARG
 ARG BOOTSTRAP_VERSION=5.3.7 \

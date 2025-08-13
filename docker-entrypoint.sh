@@ -2,7 +2,8 @@
 
 echo "Launching GPTWOL..."
 
-systemctl enable cron --now
+#Launch Cron
+cron
 
 # Launch application
 cd /app

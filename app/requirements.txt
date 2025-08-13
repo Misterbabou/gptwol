@@ -1,3 +1,4 @@
+WakeOnLan
 Flask
 gunicorn
 flask-login
