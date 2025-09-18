@@ -44,7 +44,7 @@ GPTWOL is a simple and lightweight Wake/Sleep on Lan gui made with python to wak
 - Ping Refresh to check Status availability 
 - Disable Delete or Add Computers
 - Change the port of the Web UI
-- Enable authentication
+- Enable authentication (Local auth with only one user or OIDC)
 
 ![](/assets/authentication.png)
 
@@ -74,9 +74,15 @@ services:
       - TZ=Europe/Paris #Set your timezone for Cron; default is UTC
       #- PORT=5000 #Free Port on Your host; default is 5000
       #- IP=0.0.0.0 #App listening IPV4 or IPV6 (ex [::]) address; default is 0.0.0.0
-      #- ENABLE_LOGIN=false # Enable or disable login; You would be able to access with USERNAME and PASSWORD; default is false
+      #- LOG_LEVEL=INFO #Can be DEBUG, INFO, WARN or ERROR
+      #- ENABLE_LOGIN=false # Enable or disable local login; You would be able to access with USERNAME and PASSWORD; default is false
       #- USERNAME=admin # Set a username; default is admin
       #- PASSWORD=admin # Set a password; default is admin
+      #- OIDC_ENABLED=true # Enable OIDC LOGIN; default is false
+      #- OIDC_ISSUER=https://auth.exemple.com #  Base URL of the OIDC server - Should not include the `/.well-known/openid-configuration` part and no trailing `/`; default is not set
+      #- OIDC_CLIENT_ID=oidcclientid # Your OIDC client ID; default is not set
+      #- OIDC_CLIENT_SECRET=oidcclientsecret # Your OIDC Client Secret; default is not set
+      #- OIDC_REDIRECT_URI=http(s)://urlofyourgptwol(:port) # Base URL of your GPTWOL instance; default is not set 
       #- SCRIPT_NAME=/my-app # Uncomment this line to run the app under a prefix; default is not set
       #- ENABLE_ADD_DEL=true # Enable or disable ADD computer and Delete computer buttons; default is true
       #- ENABLE_REFRESH=true # Enable or disable automatic status refresh; default is true

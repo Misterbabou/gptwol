@@ -42,18 +42,28 @@
       </div>
     </nav>
 
-    <div class="container-fluid">
-      {% if request.args.get('error') -%}
-      <div class="row justify-content-center">
-        <div class="col-lg-4 col-md-6">
-          <div class="alert alert-danger mt-3" role="alert">
-        {{ request.args.get('error') }}
+    <div aria-live="polite" aria-atomic="true" class="position-relative">
+      <div class="toast-container top-0 end-0 p-2">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="toast bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
+          <div class="toast-header">
+            <strong class="me-auto">{{ category|capitalize }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+          </div>
+          <div class="toast-body">
+            {{ message }}
           </div>
         </div>
+        {% endfor %}
+      {% endwith %}
       </div>
-      {% endif -%}
+    </div>
+
+    <div class="container-fluid">
       <div class="row justify-content-center">
         <div class="col-lg-4 col-md-6">
+          {% if os.environ.get('ENABLE_LOGIN') == 'true' -%}
           <form method="POST">
             <div class="card mt-2">
               <div class="card-body">
@@ -79,25 +89,21 @@
               </div>
             </div>
           </form>
+          {% endif %}
+          {% if os.environ.get('OIDC_ENABLED') == 'true' -%}
+          <div class="text-center mt-3">
+            <a href="{{ url_for('login_oidc') }}" class="btn btn-primary w-100 mb-3">
+              <i class="fa-solid fa-right-to-bracket"></i>
+              Login with SSO
+            </a>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
 
-    <script>
-      const togglePassword = document.getElementById('togglePassword');
-      const passwordInput = document.getElementById('password');
-      const eyeIcon = document.getElementById('eyeIcon');
-
-      togglePassword.addEventListener('click', function () {
-        // Toggle the type attribute
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-
-        // Toggle the eye icon
-        eyeIcon.classList.toggle('fa-eye');
-        eyeIcon.classList.toggle('fa-eye-slash');
-      });
-    </script>
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
     <script src="{{ url_for('static', filename='js/darkmode.js') }}"></script>
   </body>
 </html>

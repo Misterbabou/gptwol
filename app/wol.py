@@ -1,6 +1,9 @@
-from flask import Flask, request, render_template, redirect, url_for, jsonify
+from flask import Flask, request, render_template, redirect, url_for, jsonify, session, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
+from authlib.integrations.flask_client import OAuth
+from urllib.parse import urlencode
+import logging
 import socket
 import struct
 import subprocess
@@ -8,6 +11,14 @@ import os
 import ipaddress
 import re
 import fcntl
+
+log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(
+  level=getattr(logging, log_level, logging.INFO),
+  format='[%(asctime)s] [%(levelname)s] %(message)s',
+  datefmt='%Y-%m-%d %H:%M:%S %z'
+)
+logger = logging.getLogger(__name__)
 
 ping_timeout = os.environ.get('PING_TIMEOUT', 300)
 arp_timeout = os.environ.get('ARP_TIMEOUT', 300)
@@ -20,30 +31,107 @@ computer_filename = 'db/computers.txt'
 
 app = Flask(__name__, static_folder='templates')
 app.secret_key = os.urandom(24)
-enable_login = os.environ.get('ENABLE_LOGIN', 'false')
+enable_login = os.environ.get('ENABLE_LOGIN', 'false').strip().lower() == 'true'
 
 db_path = '/app/db/computers.db'
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{db_path}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# Initialize OIDC
+
+oidc_enabled = os.environ.get('OIDC_ENABLED', 'false').strip().lower() == 'true'
+oidc_issuer = os.environ.get('OIDC_ISSUER', '')
+oidc_client_id = os.environ.get('OIDC_CLIENT_ID', '')
+oidc_client_secret = os.environ.get('OIDC_CLIENT_SECRET', '')
+oidc_redirect_uri = os.environ.get('OIDC_REDIRECT_URI', '').rstrip('/') + '/auth/oidc/callback'
+oidc_scopes = os.environ.get('OIDC_SCOPES', 'openid email profile')
+
+oauth = OAuth(app)
+
+if oidc_enabled:
+  oauth.register(
+    name='oidc',
+    server_metadata_url=f'{oidc_issuer}/.well-known/openid-configuration',
+    client_id=oidc_client_id,
+    client_secret=oidc_client_secret,
+    client_kwargs={'scope': oidc_scopes}
+  )
+
+def get_or_create_oidc_user(userinfo):
+  uid = userinfo.get('sub')
+  if not uid:
+    raise RuntimeError('OIDC userinfo missing sub')
+
+  # ensure entry in the in-memory store
+  if uid not in users:
+    users[uid] = {
+      'password': None,  # no password for SSO users
+      'username': userinfo.get('preferred_username') or userinfo.get('name'),
+      'email': userinfo.get('email'),
+      'idp': 'oidc'
+    }
+  return uid
+
+@app.route('/auth/oidc/login')
+def login_oidc():
+  if not oidc_enabled:
+    return redirect(url_for('login'))  # Fallback if disabled
+
+  try:
+    # Redirect user to the IdP
+    return oauth.oidc.authorize_redirect(redirect_uri=oidc_redirect_uri)
+  except Exception as e:
+    logger.error(f"OIDC login failed: {e}")
+    flash ("SSO LOGIN ERROR", "danger")
+    return redirect(url_for('login'))
+
+
+@app.route('/auth/oidc/callback')
+def oidc_callback():
+  if not oidc_enabled:
+    return redirect(url_for('login'))
+
+  try:
+    # Exchange code for tokens
+    token = oauth.oidc.authorize_access_token()
+
+    # Parse ID Token (preferred), falling back to UserInfo when needed
+    try:
+      id_token_claims = oauth.oidc.parse_id_token(token)
+      userinfo = id_token_claims
+    except Exception:
+      userinfo = oauth.oidc.userinfo()
+
+    uid = get_or_create_oidc_user(userinfo)
+
+    # Log the user in via Flask-Login
+    user = User(uid)
+    login_user(user)
+
+    display_name = users[uid].get("email") or users[uid].get("username") or uid
+
+    user_ip = request.remote_addr
+    logger.info(f"Success OIDC login for user '{display_name}' from IP: {user_ip}")
+    flash (f"Connected as: {display_name}", "success")
+    return redirect(url_for('wol_form'))
+
+  except Exception as e:
+    logger.error(f"OIDC callback failed: {e}")
+    flash ("SSO CALLBACK ERROR", "danger")
+    return redirect(url_for('login'))
+
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'  # Redirect to this route if not logged in
 
-def conditional_login_required(func):
-  """
-  Decorator to conditionally require login based on environment variable.
-  If enable_login is set to 'false', the login requirement is skipped.
-  """
-  if enable_login.strip().lower() == 'false':
-    return func  # Skip login requirement if enable_login is set to false
-  return login_required(func)
+auth_enabled = (enable_login or oidc_enabled)
+app.config['LOGIN_DISABLED'] = not auth_enabled
 
 # In-memory user store (for simplicity)
-username = os.environ.get('USERNAME', 'admin')
-password = os.environ.get('PASSWORD', 'admin')
+username = os.environ.get('USERNAME', 'admin').strip('"')
+password = os.environ.get('PASSWORD', 'admin').strip('"')
 users = {username: {'password': password}}
 
 # User model
@@ -57,23 +145,29 @@ def load_user(user_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-  if enable_login.strip().lower() == 'false':
+  if not enable_login and not oidc_enabled:
     return redirect(url_for('wol_form'))  # Skip login
   if request.method == 'POST':
+    user_ip = request.remote_addr
     username = request.form['username']
     password = request.form['password']
     if username in users and users[username]['password'] == password:
       user = User(username)
       login_user(user)
+      logger.info(f"Success local login for user '{username}' from IP: {user_ip}")
+      flash (f"Connected as: {username}", "success")
       return redirect(url_for('wol_form'))
-    return redirect(f"{url_for('login')}?error=Invalid Credentials")
+
+    logger.warning(f"Failed local login attempt for user '{username}' from IP: {user_ip}")
+    flash ("Invalid Credentials", "danger")
+    return redirect(url_for('login'))
   return render_template('login_form.html', os=os)
 
-# Logout route
 @app.route('/logout')
-@conditional_login_required
+@login_required
 def logout():
   logout_user()
+  session.clear()
   return redirect(url_for('login'))
 
 def generate_modal_html(messages, title):
@@ -288,13 +382,13 @@ def delete_cron_entry(request_mac_address):
   return redirect(url_for('wol_form'))
 
 @app.route('/')
-@conditional_login_required
+@login_required
 def wol_form():
   computers = load_computers()
   return render_template('wol_form.html', computers=computers, is_computer_awake=lambda *_: "asleep", os=os)
 
 @app.route('/delete_computer', methods=['POST'])
-@conditional_login_required
+@login_required
 def delete_computer():
   mac_address = request.form['mac_address']
 
@@ -310,7 +404,7 @@ def delete_computer():
   return redirect(url_for('wol_form'))
 
 @app.route('/add_computer', methods=['POST'])
-@conditional_login_required
+@login_required
 def add_computer():
   name = request.form['name']
   mac_address = request.form['mac_address']
@@ -339,7 +433,7 @@ def add_computer():
   return redirect(url_for('wol_form'))
 
 @app.route('/edit_computer', methods=['POST'])
-@conditional_login_required
+@login_required
 def edit_computer():
   name = request.form['name']
   mac_address = request.form['mac_address']
@@ -386,14 +480,14 @@ def add_cron(mac_address, request_cron):
   return redirect(url_for('wol_form'))
 
 @app.route('/add_wol_cron', methods=['POST'])
-@conditional_login_required
+@login_required
 def add_wol_cron():
   request_mac_address = request.form['mac_address']
   request_cron = request.form['cron_request']
   return add_cron(request_mac_address, request_cron)
 
 @app.route('/add_sol_cron', methods=['POST'])
-@conditional_login_required
+@login_required
 def add_sol_cron():
   request_mac_address = request.form['mac_address']
   reversed_mac_address = ':'.join(reversed(request_mac_address.split(':')))
@@ -405,20 +499,20 @@ def delete_cron(mac_address):
   return redirect(url_for('wol_form'))
 
 @app.route('/delete_wol_cron', methods=['POST'])
-@conditional_login_required
+@login_required
 def delete_wol_cron():
   request_mac_address = request.form['mac_address']
   return delete_cron(request_mac_address)
 
 @app.route('/delete_sol_cron', methods=['POST'])
-@conditional_login_required
+@login_required
 def delete_sol_cron():
   request_mac_address = request.form['mac_address']
   reversed_mac_address = ':'.join(reversed(request_mac_address.split(':')))
   return delete_cron(reversed_mac_address)
 
 @app.route('/check_status')
-@conditional_login_required
+@login_required
 def check_status():
   ip_address = request.args.get('ip_address')
   test_type = request.args.get('test_type')
@@ -428,7 +522,7 @@ def check_status():
     return 'asleep'
 
 @app.route('/wol_or_sol_send', methods=['POST'])
-@conditional_login_required
+@login_required
 def wol_or_sol_send():
   mac_address = request.form['mac_address']
   computers = load_computers()
@@ -457,7 +551,7 @@ def wol_or_sol_send():
   return generate_modal_html(messages, title)
 
 @app.route('/arp_scan', methods=['GET'])
-@conditional_login_required
+@login_required
 def arp_scan():
   try:
     # Load the list of active computers
