@@ -78,7 +78,7 @@ services:
       #- ENABLE_LOGIN=false # Enable or disable local login; You would be able to access with USERNAME and PASSWORD; default is false
       #- USERNAME=admin # Set a username; default is admin
       #- PASSWORD=admin # Set a password; default is admin
-      #- OIDC_ENABLED=true # Enable OIDC LOGIN; default is false
+      #- OIDC_ENABLED=false # Enable OIDC LOGIN; default is false
       #- OIDC_ISSUER=https://auth.exemple.com #  Base URL of the OIDC server - Should not include the `/.well-known/openid-configuration` part and no trailing `/`; default is not set
       #- OIDC_CLIENT_ID=oidcclientid # Your OIDC client ID; default is not set
       #- OIDC_CLIENT_SECRET=oidcclientsecret # Your OIDC Client Secret; default is not set
@@ -140,6 +140,14 @@ Here is an example of a wol.json to shutdown a Debian based computer
 }
 ```
 
+## Configure OIDC
+
+For this example OIDC provider is at https://auth.example.com, GPTWOL is at https://gptwol.example.com
+
+- You need to configure your OIDC provider to add new OIDC configuration. You need to enter `http(s)://yourgptwolurl(:port)/auth/oidc/callback` as Redirect URI
+- Configure the following ENV variables in docker compose: `OIDC_ENABLED OIDC_ISSUER OIDC_CLIENT_ID OIDC_CLIENT_SECRET OIDC_REDIRECT_URI` (see default docker-compose.yml)
+
+
 ## Roadmap 
 
 :heavy_check_mark: Add ARM version (Added in 1.0.1)
@@ -172,17 +180,10 @@ Here is an example of a wol.json to shutdown a Debian based computer
 
 :heavy_check_mark: Migrate computers to a SQLite database (added in 7.0.0)
 
+:heavy_check_mark: OIDC sign in (added in 7.1.0)
+
 ## Questions
 
-<details>
-<summary>Will OIDC be implemented?</summary>
-<br>
-
-**OIDC Authentication** will not be implemented but you can add it for instance by using:
-- an oidc proxy [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy)
-- a proxy provider configured on reverse proxy with [authelia](https://www.authelia.com/) or [authentik](https://goauthentik.io/)
-
-</details>
 <details>
 <summary>Is there a GUI to configure automatic wakeup and shutdown?</summary>
 <br>
