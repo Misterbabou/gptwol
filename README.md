@@ -142,8 +142,6 @@ Here is an example of a wol.json to shutdown a Debian based computer
 
 ## Configure OIDC
 
-For this example OIDC provider is at https://auth.example.com, GPTWOL is at https://gptwol.example.com
-
 - You need to configure your OIDC provider to add new OIDC configuration. You need to enter `http(s)://yourgptwolurl(:port)/auth/oidc/callback` as Redirect URI
 - Configure the following ENV variables in docker compose: `OIDC_ENABLED OIDC_ISSUER OIDC_CLIENT_ID OIDC_CLIENT_SECRET OIDC_REDIRECT_URI` (see default docker-compose.yml)
 
