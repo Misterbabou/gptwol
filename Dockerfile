@@ -1,8 +1,8 @@
 # ---- Builder stage: install build deps, download assets, build wheels ----
 FROM python:3.13-slim AS builder
 
-ARG BOOTSTRAP_VERSION=5.3.7
-ARG FONTAWESOME_VERSION=7.0.0
+ARG BOOTSTRAP_VERSION=5.3.8
+ARG FONTAWESOME_VERSION=7.1.0
 
 # install build deps + tools used to download/unzip
 RUN apt-get update && apt-get install -y --no-install-recommends \
