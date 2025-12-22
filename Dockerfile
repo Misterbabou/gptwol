@@ -34,9 +34,6 @@ RUN pip install --no-cache-dir --prefix=/install -r /app/requirements.txt \
 # ---- Final stage: runtime only (no build deps) ----
 FROM python:3.13-slim
 
-ARG BOOTSTRAP_VERSION=5.3.7
-ARG FONTAWESOME_VERSION=7.0.0
-
 # install only runtime packages (no build tools)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       fping cron netcat-traditional arp-scan \
