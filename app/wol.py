@@ -2,7 +2,6 @@ from flask import Flask, request, render_template, redirect, url_for, jsonify, s
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from authlib.integrations.flask_client import OAuth
-from urllib.parse import urlencode
 import logging
 import socket
 import struct
@@ -201,7 +200,6 @@ def migrate_txt_to_db():
 
 def load_computers():
   computers = []
-  db.create_all()  # Ensure tables are created
 
   for c in Computer.query.all():
     computers.append({
@@ -279,7 +277,7 @@ def send_wol_packet(mac_address):
   s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
   s.sendto(b'\xff' * 6 + packed_mac * 16, ('<broadcast>', 9))
 
-def is_computer_awake(ip_address, port, timeout=ping_timeout):
+def is_computer_awake(ip_address, port):
   if not port or port.lower() == 'icmp':
     return is_computer_awake_icmp(ip_address)
   if port.lower() == 'arp':
@@ -494,22 +492,20 @@ def add_sol_cron():
   request_cron = request.form['cron_request']
   return add_cron(reversed_mac_address, request_cron)
 
-def delete_cron(mac_address):
-  delete_cron_entry(mac_address)
-  return redirect(url_for('wol_form'))
-
 @app.route('/delete_wol_cron', methods=['POST'])
 @login_required
 def delete_wol_cron():
   request_mac_address = request.form['mac_address']
-  return delete_cron(request_mac_address)
+  delete_cron_entry(request_mac_address)
+  return redirect(url_for('wol_form'))
 
 @app.route('/delete_sol_cron', methods=['POST'])
 @login_required
 def delete_sol_cron():
   request_mac_address = request.form['mac_address']
   reversed_mac_address = ':'.join(reversed(request_mac_address.split(':')))
-  return delete_cron(reversed_mac_address)
+  delete_cron_entry(reversed_mac_address)
+  return redirect(url_for('wol_form'))
 
 @app.route('/check_status')
 @login_required
