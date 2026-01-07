@@ -123,7 +123,9 @@ docker run -d \
 - Check the [Sleep on Lan Github](https://github.com/SR-G/sleep-on-lan) repo to download and configure
 - GPTWOL send a reverse MAC wakeonlan packet on port 9 to shutdown your computer (you don't need to configure API)
 
-Here is an example of a wol.json to shutdown a Debian based computer
+### Sleep on Lan for a debian based computer
+
+- `sol.json`
 ```
 {
     "Listeners": [
@@ -140,6 +142,26 @@ Here is an example of a wol.json to shutdown a Debian based computer
 }
 ```
 
+### Sleep on Lan for a windows based computer
+
+- `sol.json`
+```
+{
+    "Listeners": [
+        "UDP:9"
+    ],
+    "LogLevel": "INFO",
+    "Commands": [
+        {
+            "Operation": "shutdown",
+            "Command": "shutdown /s /t 0 /f"",
+            "Default": true
+        }
+    ]
+}
+```
+- Configure Windows Defender Firewall by adding a new Inbound Rule (UDP port 9 to allow).
+  
 ## Configure OIDC
 
 - You need to configure your OIDC provider to add new OIDC configuration. You need to enter `http(s)://yourgptwolurl(:port)/auth/oidc/callback` as Redirect URI
