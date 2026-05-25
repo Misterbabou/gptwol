@@ -24,14 +24,7 @@
 
       {% if os.environ.get('ENABLE_REFRESH') != 'false' -%}
         setInterval(() => {
-          // Update the status of all computers
-          for (let element of document.getElementsByClassName('status-indicator')) {
-            const ip_address = element.getAttribute('data-ip-address');
-            const test_type = element.getAttribute('data-test-type');
-            // Find the corresponding button element
-            const buttonElement = element.closest('.card').querySelector('.status-power');
-            updateStatus(ip_address, test_type, element, buttonElement);
-          }
+          updateAllStatuses();
         {% if os.environ.get('REFRESH_INTERVAL') -%}
         }, {{ os.environ.get('REFRESH_INTERVAL') | int * 1000 }});
         {% else -%}
@@ -42,6 +35,10 @@
   </head>
 
   <body>
+    {% set view_mode = os.environ.get('VIEW_MODE', 'switch').strip().lower() %}
+    {% if view_mode not in ['cards', 'list', 'switch'] %}
+      {% set view_mode = 'switch' %}
+    {% endif %}
     <nav class="navbar navbar-expand-md sticky-top" style="background-color: rgba(0, 0, 0, 0.05);">
       <div class="container-lg">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggler" aria-controls="navbarToggler" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,6 +95,16 @@
               <li><a class="dropdown-item" href="#" onclick="sortComputers('mac')">Sort by MAC</a></li>
             </ul>
           </div>
+          {% if view_mode == 'switch' -%}
+          <div class="btn-group">
+            <button type="button" class="btn active view-toggle" data-view="cards" title="Card view" aria-label="Card view">
+              <i class="fa-solid fa-grip"></i>
+            </button>
+            <button type="button" class="btn view-toggle" data-view="list" title="List view" aria-label="List view">
+              <i class="fa-solid fa-list"></i>
+            </button>
+          </div>
+          {% endif -%}
           <div class="btn-group">
             <input type="text" placeholder="Search Name, MAC or IP" class="search-input border border-secondary" value="">
             <button type="button" class="btn btn-secondary" onclick="clearSearchInput()" title="Clear">
@@ -126,17 +133,18 @@
       </div>
     </div>
 
-    <div class="container-fluid">
-      <div class="row row-sortable justify-content-center">
+    <div class="container-fluid mt-2">
+      {% if view_mode in ['cards', 'switch'] -%}
+      <div class="row computer-grid computer-sortable justify-content-center" id="cardsView">
         {% for computer in computers %}
-        <div class="col-lg-3 col-md-6 d-flex computer-card">
+        <div class="col-lg-3 col-md-6 d-flex computer-entry computer-card" data-name="{{ computer.name }}" data-ip="{{ computer.ip_address }}" data-mac="{{ computer.mac_address }}" data-check="{{ computer.test_type }}" data-status="unknown">
           <div class="card mt-2 flex-fill d-flex flex-column">
             <div class="card-body d-flex flex-column flex-grow-1">
               <div class="title-sortable row justify-content-start p-1">
                 <div class="col-auto">
                   <form method="POST" action="{{ url_for('wol_or_sol_send') }}">
                     <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
-                    <button type="submit" class="btn btn-success btn-circle btn-xl status-power">
+                    <button type="submit" class="btn btn-success btn-circle btn-xl status-power" title="Wake" aria-label="Wake or sleep {{ computer.name }}">
                       <i class="fa-solid fa-power-off"></i>
                     </button>
                   </form>
@@ -187,6 +195,86 @@
         </div>
         {% endfor %}
       </div>
+      {% endif -%}
+
+      {% if view_mode in ['list', 'switch'] -%}
+      <div class="table-responsive computer-list-wrapper{% if view_mode == 'switch' %} hidden{% endif %}" id="listView">
+        <table class="table table-hover align-middle computer-list">
+          <thead>
+            <tr>
+              <th scope="col" class="status-column sortable-column" data-sort="status">On/Off</th>
+              <th scope="col" class="name-column sortable-column" data-sort="name">Name</th>
+              <th scope="col" class="sortable-column" data-sort="ip">IP</th>
+              <th scope="col" class="sortable-column" data-sort="mac">MAC</th>
+              <th scope="col" class="sortable-column" data-sort="check">Check-Method</th>
+              {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
+              <th scope="col" class="actions-column text-end">Actions</th>
+              {% endif -%}
+            </tr>
+          </thead>
+          <tbody class="computer-sortable">
+        {% for computer in computers %}
+          <tr class="computer-entry computer-list-row" data-name="{{ computer.name }}" data-ip="{{ computer.ip_address }}" data-mac="{{ computer.mac_address }}" data-check="{{ computer.test_type }}" data-status="unknown">
+            <td class="text-nowrap">
+              <form method="POST" action="{{ url_for('wol_or_sol_send') }}" class="m-0">
+                <input type="hidden" name="mac_address" value="{{ computer.mac_address }}">
+                <button type="submit" class="btn btn-success btn-circle btn-lg status-power" title="Wake" aria-label="Wake or sleep {{ computer.name }}">
+                  <i class="fa-solid fa-power-off"></i>
+                </button>
+              </form>
+            </td>
+            <td class="computer-name">
+              <div class="sortable fw-semibold">{{ computer.name }}</div>
+              {% if computer.cron_wol_schedule is defined or computer.cron_sol_schedule is defined -%}
+              <div class="schedule-badges">
+                {% if computer.cron_wol_schedule is defined -%}
+                <span class="badge text-bg-success">
+                  <i class="fa-solid fa-arrow-up"></i>
+                  <span>{{ computer.cron_wol_schedule }}</span>
+                </span>
+                {% endif -%}
+                {% if computer.cron_sol_schedule is defined -%}
+                <span class="badge text-bg-danger">
+                  <i class="fa-solid fa-arrow-down"></i>
+                  <span>{{ computer.cron_sol_schedule }}</span>
+                </span>
+                {% endif -%}
+              </div>
+              {% endif -%}
+            </td>
+            <td class="network-address sortable">{{ computer.ip_address }}</td>
+            <td class="network-address sortable">{{ computer.mac_address }}</td>
+            <td>
+              <div class="check-method">
+                <span class="status-indicator asleep" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}"></span>
+              {% if computer.test_type in ['icmp', 'arp'] -%}
+                <span class="badge text-bg-secondary">{{ computer.test_type | upper }}</span>
+              {% else -%}
+                <span class="badge text-bg-secondary">TCP {{ computer.test_type }}</span>
+              {% endif -%}
+              </div>
+            </td>
+            {% if os.environ.get('ENABLE_ADD_DEL') != 'false' -%}
+            <td class="text-end">
+              <div class="action-buttons">
+                <button type="button" class="btn btn-primary btn-circle btn-lg" title="Configure Cron" data-bs-toggle="modal" data-bs-target="#cronSettingsModal" onclick="loadCronSettings('{{ computer.name }}', '{{ computer.cron_wol_schedule }}', '{{ computer.cron_sol_schedule }}', '{{ computer.mac_address }}')">
+                  <i class="fa-regular fa-clock"></i>
+                </button>
+                <button type="button" class="btn btn-primary btn-circle btn-lg" title="Edit computer" data-bs-toggle="modal" data-bs-target="#editComputer" data-name="{{ computer.name }}" data-mac-address="{{ computer.mac_address }}" data-ip-address="{{ computer.ip_address }}" data-test-type="{{ computer.test_type }}">
+                  <i class="fa-regular fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="btn btn-danger btn-circle btn-lg" title="Delete computer" data-bs-toggle="modal" data-bs-target="#staticDelete" onclick="setDeleteForm('{{ url_for('delete_computer') }}', 'mac_address', '{{ computer.mac_address }}', 'Computer {{ computer.name }}')">
+                  <i class="fa-regular fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+            {% endif -%}
+          </tr>
+        {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif -%}
     </div>
 
      <!-- Modal -->
