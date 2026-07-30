@@ -19,6 +19,96 @@
   background-color: #ff0000;
 }
 
+.computer-list-wrapper {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.computer-list {
+  margin-bottom: 0;
+  min-width: 760px;
+}
+
+.computer-list th {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sortable-column {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable-column::after {
+  color: var(--bs-secondary-color);
+  content: "\f0dc";
+  font-family: "Font Awesome 7 Free";
+  font-size: 0.75rem;
+  font-weight: 900;
+  margin-left: 0.4rem;
+}
+
+.sortable-column.sorted-asc::after {
+  content: "\f0de";
+}
+
+.sortable-column.sorted-desc::after {
+  content: "\f0dd";
+}
+
+.computer-list td {
+  vertical-align: middle;
+}
+
+.status-column {
+  width: 112px;
+}
+
+.name-column {
+  min-width: 180px;
+}
+
+.actions-column {
+  width: 168px;
+}
+
+.network-address {
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.schedule-badges,
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.schedule-badges {
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.action-buttons {
+  justify-content: flex-end;
+}
+
+.check-method {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.view-toggle {
+  border: 1px solid var(--bs-border-color);
+}
+
+.view-toggle.active {
+  background-color: var(--bs-secondary);
+  color: var(--bs-light);
+}
+
 .delete-button,
 .add-button,
 .search-input {

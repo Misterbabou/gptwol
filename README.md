@@ -85,6 +85,7 @@ services:
       #- OIDC_REDIRECT_URI=http(s)://urlofyourgptwol(:port) # Base URL of your GPTWOL instance; default is not set 
       #- SCRIPT_NAME=/my-app # Uncomment this line to run the app under a prefix; default is not set
       #- ENABLE_ADD_DEL=true # Enable or disable ADD computer and Delete computer buttons; default is true
+      #- VIEW_MODE=switch # Set the device display mode: cards, list or switch; default is switch
       #- ENABLE_REFRESH=true # Enable or disable automatic status refresh; default is true
       #- REFRESH_INTERVAL=30 # Uncomment to change time between each status check for icmp, arp or tcp, can (in s); default value is 30 seconds
       #- PING_TIMEOUT=300 #Uncomment to change the time to wait for a ping answer in (in ms); default value is 300 milliseconds
@@ -101,6 +102,22 @@ services:
 Run the application
 ```
 docker compose up -d
+```
+
+#### Device display mode
+
+Set `VIEW_MODE` to choose how devices are shown on the main page:
+
+| Value | Behavior |
+| ----- | -------- |
+| `switch` | Show the card view by default and provide a button to switch to list view. This is the default. |
+| `cards` | Show only the card view and hide the view switch. |
+| `list` | Show only the list view and hide the view switch. |
+
+Example:
+```
+environment:
+  - VIEW_MODE=list
 ```
 
 ### With docker

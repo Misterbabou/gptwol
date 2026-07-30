@@ -1,22 +1,36 @@
+const sortDirections = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.querySelector('.search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', filterComputers);
+  }
+
+  document.querySelectorAll('.view-toggle').forEach(button => {
+    button.addEventListener('click', () => setViewMode(button.dataset.view));
+  });
+
+  document.querySelectorAll('.sortable-column').forEach(column => {
+    column.addEventListener('click', () => sortComputers(column.dataset.sort));
+  });
+});
+
 function filterComputers() {
   const query = document.querySelector('.search-input').value.toLowerCase();
-  const cards = document.querySelectorAll('.computer-card');
+  const computers = document.querySelectorAll('.computer-entry');
 
-  cards.forEach(card => {
-    const title = card.querySelector('.title-sortable .sortable').textContent.toLowerCase();
-    const ip = card.querySelector('.info-sortable .sortable:nth-of-type(1)').textContent.toLowerCase(); // IP address
-    const mac = card.querySelector('.info-sortable .sortable:nth-of-type(2)').textContent.toLowerCase(); // MAC address
+  computers.forEach(computer => {
+    const title = computer.dataset.name.toLowerCase();
+    const ip = computer.dataset.ip.toLowerCase();
+    const mac = computer.dataset.mac.toLowerCase();
 
     if (title.includes(query) || ip.includes(query) || mac.includes(query)) {
-      card.classList.remove('hidden'); // Show card
+      computer.classList.remove('hidden');
     } else {
-      card.classList.add('hidden'); // Hide card
+      computer.classList.add('hidden');
     }
   });
 }
-
-// Attach the filter function to the input event
-document.querySelector('.search-input').addEventListener('input', filterComputers);
 
 function clearSearchInput() {
   const searchInput = document.querySelector('.search-input');
@@ -24,13 +38,83 @@ function clearSearchInput() {
   filterComputers(); // Reset the filter
 }
 
+function setViewMode(viewMode) {
+  const cardsView = document.getElementById('cardsView');
+  const listView = document.getElementById('listView');
+
+  if (viewMode === 'list') {
+    if (cardsView) {
+      cardsView.classList.add('hidden');
+    }
+    if (listView) {
+      listView.classList.remove('hidden');
+    }
+  } else {
+    if (listView) {
+      listView.classList.add('hidden');
+    }
+    if (cardsView) {
+      cardsView.classList.remove('hidden');
+    }
+  }
+
+  document.querySelectorAll('.view-toggle').forEach(button => {
+    button.classList.toggle('active', button.dataset.view === viewMode);
+  });
+}
+
 function ipToNumber(ip) {
-  return ip.split('.').reduce((acc, octet) => (acc << 8) + Number(octet), 0);
+  if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
+    return null;
+  }
+
+  const octets = ip.split('.').map(Number);
+  if (octets.some(octet => octet < 0 || octet > 255)) {
+    return null;
+  }
+
+  return octets.reduce((acc, octet) => (acc * 256) + octet, 0);
+}
+
+function getSortValue(computer, criteria) {
+  switch (criteria) {
+    case 'name':
+      return computer.dataset.name.toLowerCase();
+    case 'ip':
+      return computer.dataset.ip;
+    case 'mac':
+      return computer.dataset.mac.toLowerCase();
+    case 'check':
+      return computer.dataset.check.toLowerCase();
+    case 'status':
+      return computer.dataset.status || 'unknown';
+    default:
+      return '';
+  }
+}
+
+function compareComputers(a, b, criteria, direction) {
+  const directionFactor = direction === 'desc' ? -1 : 1;
+
+  if (criteria === 'ip') {
+    const aIpNumber = ipToNumber(a.dataset.ip);
+    const bIpNumber = ipToNumber(b.dataset.ip);
+
+    if (aIpNumber !== null && bIpNumber !== null) {
+      return (aIpNumber - bIpNumber) * directionFactor;
+    }
+  }
+
+  return String(getSortValue(a, criteria)).localeCompare(
+    String(getSortValue(b, criteria)),
+    undefined,
+    { numeric: true }
+  ) * directionFactor;
 }
 
 function sortComputers(criteria) {
-  const cardsContainer = document.querySelector('.row.row-sortable');
-  const cards = Array.from(cardsContainer.children); // Convert NodeList to Array
+  sortDirections[criteria] = sortDirections[criteria] === 'asc' ? 'desc' : 'asc';
+  const direction = sortDirections[criteria];
 
   // Update the active class in the dropdown
   const dropdownItems = document.querySelectorAll('.dropdown-item');
@@ -38,36 +122,23 @@ function sortComputers(criteria) {
     item.classList.remove('active'); // Remove active class from all items
   });
 
-  // Sort the cards based on the selected criteria
-  cards.sort((a, b) => {
-    let aValue, bValue;
+  const activeDropdownItem = Array.from(dropdownItems).find(item => item.getAttribute('onclick') === `sortComputers('${criteria}')`);
+  if (activeDropdownItem) {
+    activeDropdownItem.classList.add('active');
+  }
 
-    switch (criteria) {
-      case 'name':
-        aValue = a.querySelector('.title-sortable .sortable').textContent.toLowerCase();
-        bValue = b.querySelector('.title-sortable .sortable').textContent.toLowerCase();
-        dropdownItems[0].classList.add('active'); // Sort by Name
-        return aValue.localeCompare(bValue); // Compare values for sorting
-
-      case 'ip':
-        const aIp = a.querySelector('.info-sortable .sortable:nth-of-type(1)').textContent;
-        const bIp = b.querySelector('.info-sortable .sortable:nth-of-type(1)').textContent;
-        dropdownItems[1].classList.add('active'); // Sort by IP
-
-        return ipToNumber(aIp) - ipToNumber(bIp); // Compare numeric values
-
-      case 'mac':
-        aValue = a.querySelector('.info-sortable .sortable:nth-of-type(2)').textContent.toLowerCase(); // MAC address
-        bValue = b.querySelector('.info-sortable .sortable:nth-of-type(2)').textContent.toLowerCase(); // MAC address
-        dropdownItems[2].classList.add('active'); // Sort by MAC
-        return aValue.localeCompare(bValue); // Compare values for sorting
+  document.querySelectorAll('.sortable-column').forEach(column => {
+    column.classList.remove('sorted-asc', 'sorted-desc');
+    if (column.dataset.sort === criteria) {
+      column.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
     }
   });
 
-  // Clear the current cards and append sorted cards
-  cardsContainer.innerHTML = '';
-  cards.forEach(card => cardsContainer.appendChild(card));
-}
+  document.querySelectorAll('.computer-sortable').forEach(computersContainer => {
+    const computers = Array.from(computersContainer.children);
+    computers.sort((a, b) => compareComputers(a, b, criteria, direction));
 
-// Attach the filter function to the input event
-document.querySelector('.search-input').addEventListener('input', filterComputers);
+    computersContainer.innerHTML = '';
+    computers.forEach(computer => computersContainer.appendChild(computer));
+  });
+}
