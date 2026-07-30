@@ -2,7 +2,7 @@
 FROM python:3.14-slim AS builder
 
 ARG BOOTSTRAP_VERSION=5.3.8
-ARG FONTAWESOME_VERSION=7.2.0
+ARG FONTAWESOME_VERSION=7.3.1
 
 # install build deps + tools used to download/unzip
 RUN apt-get update && apt-get install -y --no-install-recommends \
