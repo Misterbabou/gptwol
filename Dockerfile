@@ -1,7 +1,7 @@
 # ---- Builder stage: install build deps, download assets, build wheels ----
-FROM python:3.14-slim AS builder
+FROM python:3.15-slim AS builder
 
-ARG BOOTSTRAP_VERSION=5.3.8
+ARG BOOTSTRAP_VERSION=5.3.9
 ARG FONTAWESOME_VERSION=7.3.1
 
 # install build deps + tools used to download/unzip
@@ -32,7 +32,7 @@ RUN pip install --no-cache-dir --prefix=/install -r /app/requirements.txt \
  && rm -rf /root/.cache/pip
 
 # ---- Final stage: runtime only (no build deps) ----
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 # install only runtime packages (no build tools)
 RUN apt-get update && apt-get install -y --no-install-recommends \
